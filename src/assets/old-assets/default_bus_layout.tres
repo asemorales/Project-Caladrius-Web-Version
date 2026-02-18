@@ -1,0 +1,20 @@
+[gd_resource type="AudioBusLayout" format=3 uid="uid://boy4iqcmcaeq8"]
+
+[sub_resource type="AudioEffectCapture" id="AudioEffectCapture_dw6kj"]
+resource_name = "Capture"
+buffer_length = 1.0
+
+[sub_resource type="AudioEffectRecord" id="AudioEffectRecord_bkgif"]
+resource_name = "Record"
+
+[resource]
+bus/1/name = &"Record"
+bus/1/solo = false
+bus/1/mute = true
+bus/1/bypass_fx = false
+bus/1/volume_db = 0.0
+bus/1/send = &"Master"
+bus/1/effect/0/effect = SubResource("AudioEffectCapture_dw6kj")
+bus/1/effect/0/enabled = true
+bus/1/effect/1/effect = SubResource("AudioEffectRecord_bkgif")
+bus/1/effect/1/enabled = true

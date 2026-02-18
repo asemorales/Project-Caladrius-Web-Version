@@ -1,0 +1,326 @@
+[gd_scene format=3 uid="uid://cjbcjuvhy4g16"]
+
+[ext_resource type="Shader" uid="uid://bd1fq8b65f6rn" path="res://src/assets/old-assets/2d_sprites/2d_patient.gdshader" id="1_65g08"]
+[ext_resource type="Texture2D" uid="uid://c3qv7f2pkd1gi" path="res://src/assets/old-assets/2d_sprites/2D_Test.png" id="1_bgm15"]
+[ext_resource type="Texture2D" uid="uid://ew4ejv83xgdb" path="res://src/assets/old-assets/2d_sprites/2D_Test_hair.png" id="2_pql5d"]
+[ext_resource type="Texture2D" uid="uid://c3ibqh2p5lh3s" path="res://src/assets/old-assets/2d_sprites/mouth_sprites.png" id="2_xiyjh"]
+[ext_resource type="Texture2D" uid="uid://ddnhm666cmo6n" path="res://src/assets/old-assets/2d_sprites/glasses.png" id="3_8rhx2"]
+[ext_resource type="Texture2D" uid="uid://bfuketm4nvv3p" path="res://src/assets/old-assets/2d_sprites/forehead.png" id="4_eqksv"]
+[ext_resource type="Texture2D" uid="uid://d1irnkf40ulm2" path="res://src/assets/old-assets/2d_sprites/Cheeks.png" id="5_ffo8d"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_8rvce"]
+shader = ExtResource("1_65g08")
+shader_parameter/line_color = Color(0.178619, 0.155843, 0.0334251, 1)
+shader_parameter/line_thickness = 4.021
+
+[sub_resource type="Animation" id="Animation_s2g3o"]
+resource_name = "Idle"
+length = 4.00001
+loop_mode = 1
+step = 0.0666667
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Body/Hair:region_rect")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 4),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Rect2(0, 0, 360, 922), Rect2(0, 0, 360, 922)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Body:position")
+tracks/1/interp = 2
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 1.9467, 3.97286),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector2(365, 449), Vector2(365, 430), Vector2(365, 449)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Body:region_rect")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Rect2(0, 0, 360, 922)]
+}
+
+[sub_resource type="Animation" id="Animation_2jukh"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Body/Hair:region_rect")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Rect2(0, 0, 360, 922)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Body:position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(365, 449)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Body:region_rect")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Rect2(0, 0, 360, 922)]
+}
+
+[sub_resource type="Animation" id="Animation_fsk3v"]
+resource_name = "Thinking"
+length = 0.0666733
+loop_mode = 1
+step = 0.0666667
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Body/Hair:region_rect")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Rect2(360, 0, 360, 922)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Body:region_rect")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Rect2(360, 0, 360, 922)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_a3gik"]
+_data = {
+"Idle": SubResource("Animation_s2g3o"),
+"RESET": SubResource("Animation_2jukh"),
+"Thinking": SubResource("Animation_fsk3v")
+}
+
+[sub_resource type="Animation" id="Animation_vijij"]
+resource_name = "NotTalking"
+length = 0.0333367
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Body/Mouth:region_rect")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Rect2(0, 0, 46, 21)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Body/Mouth:scale")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_u3f10"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Body/Mouth:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Body/Mouth:region_rect")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Rect2(0, 0, 46, 21)]
+}
+
+[sub_resource type="Animation" id="Animation_8q0au"]
+resource_name = "Talking"
+length = 0.500003
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Body/Mouth:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.239939, 0.501866),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector2(1, 1), Vector2(1, 0.3), Vector2(1, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Body/Mouth:region_rect")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.501866),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Rect2(92, 0, 46, 21), Rect2(92, 0, 46, 21)]
+}
+
+[sub_resource type="Animation" id="Animation_u62iq"]
+resource_name = "Thinking"
+length = 0.0333367
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Body/Mouth:region_rect")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0.00260803),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Rect2(46, 0, 46, 21)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Body/Mouth:scale")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_m4pdy"]
+_data = {
+"NotTalking": SubResource("Animation_vijij"),
+"RESET": SubResource("Animation_u3f10"),
+"Talking": SubResource("Animation_8q0au"),
+"Thinking": SubResource("Animation_u62iq")
+}
+
+[node name="2D_Patient" type="CanvasLayer"]
+
+[node name="Body" type="Sprite2D" parent="."]
+material = SubResource("ShaderMaterial_8rvce")
+position = Vector2(365, 449)
+texture = ExtResource("1_bgm15")
+region_enabled = true
+region_rect = Rect2(0, 0, 360, 922)
+
+[node name="Hair" type="Sprite2D" parent="Body"]
+modulate = Color(0.937255, 0.827451, 0.396078, 1)
+texture = ExtResource("2_pql5d")
+region_enabled = true
+region_rect = Rect2(0, 0, 360, 922)
+
+[node name="Mouth" type="Sprite2D" parent="Body"]
+position = Vector2(-1, -190)
+texture = ExtResource("2_xiyjh")
+region_enabled = true
+region_rect = Rect2(0, 0, 46, 21)
+
+[node name="Glasses" type="Sprite2D" parent="Body"]
+visible = false
+position = Vector2(-1, -234)
+scale = Vector2(0.0821875, 0.0821875)
+texture = ExtResource("3_8rhx2")
+
+[node name="Face" type="Node2D" parent="Body"]
+visible = false
+modulate = Color(1, 1, 1, 0.588235)
+position = Vector2(-1, -226)
+
+[node name="HeadWrinkllle" type="Sprite2D" parent="Body/Face"]
+position = Vector2(-1, -48)
+scale = Vector2(0.09, 0.09)
+texture = ExtResource("4_eqksv")
+
+[node name="Cheek_R" type="Sprite2D" parent="Body/Face"]
+position = Vector2(30, 25)
+scale = Vector2(0.185, 0.185)
+texture = ExtResource("5_ffo8d")
+flip_h = true
+
+[node name="Cheek_L" type="Sprite2D" parent="Body/Face"]
+position = Vector2(-33, 26)
+scale = Vector2(0.185, 0.185)
+texture = ExtResource("5_ffo8d")
+
+[node name="Eye_R" type="Sprite2D" parent="Body/Face"]
+position = Vector2(41, 5)
+rotation = -1.13846
+scale = Vector2(0.1, 0.1)
+texture = ExtResource("5_ffo8d")
+flip_h = true
+
+[node name="Eye_L" type="Sprite2D" parent="Body/Face"]
+position = Vector2(-42, 6)
+rotation = 0.989093
+scale = Vector2(0.1, 0.1)
+texture = ExtResource("5_ffo8d")
+
+[node name="BodyPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+"": SubResource("AnimationLibrary_a3gik")
+}
+autoplay = "Idle"
+
+[node name="LipPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+"": SubResource("AnimationLibrary_m4pdy")
+}
+autoplay = "NotTalking"

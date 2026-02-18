@@ -1,0 +1,41 @@
+[gd_scene format=3 uid="uid://pkiqgl82hd34"]
+
+[ext_resource type="PackedScene" uid="uid://cjbcjuvhy4g16" path="res://src/assets/old-assets/2d_sprites/2d_patient.tscn" id="1_eedbr"]
+[ext_resource type="Texture2D" uid="uid://bydag26rdk628" path="res://src/assets/old-assets/2d_sprites/2D_MaleTest.png" id="1_mpptp"]
+[ext_resource type="Texture2D" uid="uid://bwpf18ufrf81g" path="res://src/assets/old-assets/2d_sprites/2D_MaleTest_Hair.png" id="4_w5nc5"]
+
+[node name="2D_Patient" unique_id=750211850 instance=ExtResource("1_eedbr")]
+
+[node name="Body" parent="." index="0"]
+texture = ExtResource("1_mpptp")
+
+[node name="Hair" parent="Body" index="0"]
+texture = ExtResource("4_w5nc5")
+offset = Vector2(0, 1.83)
+
+[node name="Mouth" parent="Body" index="1"]
+offset = Vector2(0, -12.87)
+
+[node name="Glasses" parent="Body" index="2"]
+offset = Vector2(-29.445, -246.65)
+
+[node name="HeadWrinkllle" parent="Body/Face" index="0"]
+offset = Vector2(-28.86, -279.175)
+
+[node name="Cheek_R" parent="Body/Face" index="1"]
+position = Vector2(29.7125, 15.205)
+
+[node name="Cheek_L" parent="Body/Face" index="2"]
+position = Vector2(-33.2875, 16.205)
+
+[node name="Eye_R" parent="Body/Face" index="3"]
+position = Vector2(38.655, -17.3364)
+
+[node name="Eye_L" parent="Body/Face" index="4"]
+position = Vector2(-44.345, -16.3364)
+
+[node name="BodyPlayer" parent="." index="1"]
+autoplay = &"Idle"
+
+[node name="LipPlayer" parent="." index="2"]
+autoplay = &"NotTalking"

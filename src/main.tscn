@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://dgyhbb2xxfysc"]
+
+[ext_resource type="Script" uid="uid://pd2bfpgu18b3" path="res://src/main.gd" id="1_gh0ne"]
+[ext_resource type="PackedScene" uid="uid://dcqj2gy4fnbrt" path="res://src/ui-scenes/main_menu.tscn" id="2_3cfgd"]
+[ext_resource type="PackedScene" uid="uid://ddhwjlc5i4ydk" path="res://src/ui-scenes/loading_screen.tscn" id="2_5q4o7"]
+
+[node name="Main" type="Node" unique_id=1635720946]
+script = ExtResource("1_gh0ne")
+
+[node name="MainMenuLayer" type="CanvasLayer" parent="." unique_id=1455390612]
+layer = 2
+
+[node name="MainMenu" parent="MainMenuLayer" unique_id=1989057295 instance=ExtResource("2_3cfgd")]
+
+[node name="LoadingScreenLayer" type="CanvasLayer" parent="." unique_id=1278042610]
+layer = 10
+
+[node name="LoadingScreen" parent="LoadingScreenLayer" unique_id=1573158413 instance=ExtResource("2_5q4o7")]
+pivot_offset = Vector2(193, 288)
