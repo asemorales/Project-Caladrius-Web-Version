@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://bq6kmbbkl5cu4"]
+
+[ext_resource type="Texture2D" uid="uid://dy1ysplhoim8j" path="res://src/assets/patient-interview-assets/2DBG.png" id="1_8o041"]
+
+[node name="PatientInterview" type="Node2D" unique_id=1148397498]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=861252414]
+
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer" unique_id=1797920049]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_8o041")
+expand_mode = 2
+stretch_mode = 6
