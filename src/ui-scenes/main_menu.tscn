@@ -39,13 +39,13 @@ script = ExtResource("2_jyhnq")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="StartMenu" unique_id=1643911443]
 layout_mode = 2
-theme_override_constants/separation = 50
+theme_override_constants/separation = 100
 
 [node name="LogoContainer" type="CenterContainer" parent="StartMenu/VBoxContainer" unique_id=1856752599]
 layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="StartMenu/VBoxContainer/LogoContainer" unique_id=1701000097]
-custom_minimum_size = Vector2(700, 300)
+custom_minimum_size = Vector2(1000, 400)
 layout_mode = 2
 texture = ExtResource("1_jkw8p")
 expand_mode = 1
@@ -56,34 +56,34 @@ custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
 
 [node name="StartMenuButtons" type="VBoxContainer" parent="StartMenu/VBoxContainer/CenterContainer" unique_id=1092578558]
-custom_minimum_size = Vector2(200, 0)
+custom_minimum_size = Vector2(300, 200)
 layout_mode = 2
-theme_override_constants/separation = 15
+theme_override_constants/separation = 25
 
 [node name="StartButton" type="Button" parent="StartMenu/VBoxContainer/CenterContainer/StartMenuButtons" unique_id=668463315]
 layout_mode = 2
 theme = ExtResource("2_jkw8p")
-theme_override_font_sizes/font_size = 35
+theme_override_font_sizes/font_size = 50
 text = "Start"
 
 [node name="SettingsButton" type="Button" parent="StartMenu/VBoxContainer/CenterContainer/StartMenuButtons" unique_id=276555906]
 layout_mode = 2
 theme = ExtResource("2_jkw8p")
-theme_override_font_sizes/font_size = 35
+theme_override_font_sizes/font_size = 50
 text = "Settings
 "
 
 [node name="HelpButton" type="Button" parent="StartMenu/VBoxContainer/CenterContainer/StartMenuButtons" unique_id=1197177024]
 layout_mode = 2
 theme = ExtResource("2_jkw8p")
-theme_override_font_sizes/font_size = 35
+theme_override_font_sizes/font_size = 50
 text = "Help
 "
 
 [node name="QuitButton" type="Button" parent="StartMenu/VBoxContainer/CenterContainer/StartMenuButtons" unique_id=1615317326]
 layout_mode = 2
 theme = ExtResource("2_jkw8p")
-theme_override_font_sizes/font_size = 35
+theme_override_font_sizes/font_size = 50
 text = "Quit
 "
 
@@ -109,7 +109,7 @@ theme_override_constants/separation = 40
 layout_mode = 2
 theme = ExtResource("2_jkw8p")
 theme_override_fonts/font = ExtResource("3_4yc3r")
-theme_override_font_sizes/font_size = 45
+theme_override_font_sizes/font_size = 60
 text = "SETTINGS"
 horizontal_alignment = 1
 
@@ -117,7 +117,7 @@ horizontal_alignment = 1
 layout_mode = 2
 
 [node name="Panel" type="Panel" parent="SettingsMenu/VBoxContainer/CenterContainer" unique_id=788749262]
-custom_minimum_size = Vector2(900, 400)
+custom_minimum_size = Vector2(1000, 600)
 layout_mode = 2
 theme = ExtResource("2_jkw8p")
 
@@ -128,59 +128,59 @@ theme_override_constants/margin_bottom = 30
 
 [node name="HBoxContainer" type="HBoxContainer" parent="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer" unique_id=439360830]
 layout_mode = 2
-theme_override_constants/separation = 80
+theme_override_constants/separation = 100
 alignment = 1
 
 [node name="VBoxContainer" type="VBoxContainer" parent="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer" unique_id=1096188874]
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
-theme_override_constants/separation = 30
+theme_override_constants/separation = 40
 
 [node name="VolumeLabel" type="Label" parent="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer" unique_id=986819891]
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 65)
 layout_mode = 2
 theme = ExtResource("2_jkw8p")
-theme_override_font_sizes/font_size = 35
+theme_override_font_sizes/font_size = 50
 text = "Volume"
 horizontal_alignment = 2
 
 [node name="TextToSpeechLabel" type="Label" parent="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer" unique_id=1661221215]
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 65)
 layout_mode = 2
 theme = ExtResource("2_jkw8p")
-theme_override_font_sizes/font_size = 35
+theme_override_font_sizes/font_size = 50
 text = "Text-To-Speech"
 horizontal_alignment = 2
 
 [node name="SpeechToTextLabel" type="Label" parent="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer" unique_id=1412734170]
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 65)
 layout_mode = 2
 theme = ExtResource("2_jkw8p")
-theme_override_font_sizes/font_size = 35
+theme_override_font_sizes/font_size = 50
 text = "Speech-To-Text"
 horizontal_alignment = 2
 
 [node name="MicrophoneLabel" type="Label" parent="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer" unique_id=174327537]
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 65)
 layout_mode = 2
 theme = ExtResource("2_jkw8p")
-theme_override_font_sizes/font_size = 35
+theme_override_font_sizes/font_size = 50
 text = "Microphone"
 horizontal_alignment = 2
 
 [node name="VBoxContainer2" type="VBoxContainer" parent="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer" unique_id=1237038045]
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
-theme_override_constants/separation = 30
+theme_override_constants/separation = 40
 
 [node name="VolumeSlider" type="HSlider" parent="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2" unique_id=1055651943]
-custom_minimum_size = Vector2(300, 50)
+custom_minimum_size = Vector2(300, 65)
 layout_mode = 2
 theme = ExtResource("2_jkw8p")
 value = 100.0
 
 [node name="TextToSpeechOption" type="OptionButton" parent="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2" unique_id=1045222462]
-custom_minimum_size = Vector2(300, 50)
+custom_minimum_size = Vector2(300, 65)
 layout_mode = 2
 theme = ExtResource("2_jkw8p")
 theme_override_font_sizes/font_size = 30
@@ -195,7 +195,7 @@ popup/item_2/text = "English (Offline; Robotic)"
 popup/item_2/id = 2
 
 [node name="SpeechToTextOption" type="OptionButton" parent="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2" unique_id=1922653592]
-custom_minimum_size = Vector2(300, 50)
+custom_minimum_size = Vector2(300, 65)
 layout_mode = 2
 theme = ExtResource("2_jkw8p")
 theme_override_font_sizes/font_size = 30
@@ -211,15 +211,17 @@ popup/item_2/id = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2" unique_id=1492105936]
 layout_mode = 2
+theme_override_constants/separation = 10
 
 [node name="MicrophoneOption" type="OptionButton" parent="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/VBoxContainer" unique_id=501442526]
-custom_minimum_size = Vector2(300, 50)
+custom_minimum_size = Vector2(300, 65)
 layout_mode = 2
 theme = ExtResource("2_jkw8p")
 theme_override_font_sizes/font_size = 30
 clip_text = true
 
 [node name="Button" type="Button" parent="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/VBoxContainer" unique_id=1472818023]
+custom_minimum_size = Vector2(0, 65)
 layout_mode = 2
 theme = ExtResource("2_jkw8p")
 theme_override_font_sizes/font_size = 30
@@ -232,17 +234,17 @@ theme_override_constants/separation = 40
 alignment = 1
 
 [node name="SaveAndExitButton" type="Button" parent="SettingsMenu/VBoxContainer/HBoxContainer2" unique_id=1927243060]
-custom_minimum_size = Vector2(250, 0)
+custom_minimum_size = Vector2(400, 0)
 layout_mode = 2
 theme = ExtResource("2_jkw8p")
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 50
 text = "Save and Exit"
 
 [node name="ExitOnlyButton" type="Button" parent="SettingsMenu/VBoxContainer/HBoxContainer2" unique_id=752680690]
-custom_minimum_size = Vector2(250, 0)
+custom_minimum_size = Vector2(400, 0)
 layout_mode = 2
 theme = ExtResource("2_jkw8p")
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 50
 text = "Exit Only"
 
 [connection signal="pressed" from="StartMenu/VBoxContainer/CenterContainer/StartMenuButtons/SettingsButton" to="." method="_on_settings_button_pressed"]

@@ -3,12 +3,16 @@
 [ext_resource type="Script" uid="uid://pd2bfpgu18b3" path="res://src/main.gd" id="1_gh0ne"]
 [ext_resource type="PackedScene" uid="uid://dcqj2gy4fnbrt" path="res://src/ui-scenes/main_menu.tscn" id="2_3cfgd"]
 [ext_resource type="PackedScene" uid="uid://ddhwjlc5i4ydk" path="res://src/ui-scenes/loading_screen.tscn" id="2_5q4o7"]
+[ext_resource type="PackedScene" uid="uid://bq6kmbbkl5cu4" path="res://src/patient-interview-scenes/patient_interview.tscn" id="2_fyndt"]
 
 [node name="Main" type="Node" unique_id=1635720946]
 script = ExtResource("1_gh0ne")
 
+[node name="PatientInterview" parent="." unique_id=1148397498 instance=ExtResource("2_fyndt")]
+
 [node name="MainMenuLayer" type="CanvasLayer" parent="." unique_id=1455390612]
 layer = 2
+visible = false
 
 [node name="MainMenu" parent="MainMenuLayer" unique_id=1989057295 instance=ExtResource("2_3cfgd")]
 

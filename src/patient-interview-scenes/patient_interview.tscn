@@ -1,17 +1,82 @@
 [gd_scene format=3 uid="uid://bq6kmbbkl5cu4"]
 
 [ext_resource type="Texture2D" uid="uid://dy1ysplhoim8j" path="res://src/assets/patient-interview-assets/2DBG.png" id="1_8o041"]
+[ext_resource type="Theme" uid="uid://c4dyghxurupqh" path="res://src/assets/ui-assets/StartMenu.tres" id="2_qmotm"]
+[ext_resource type="Texture2D" uid="uid://bbkqf4vf8h2h2" path="res://src/assets/ui-assets/ArrowSharpVariant1.png" id="3_gbso1"]
+[ext_resource type="Texture2D" uid="uid://b47p7hbqamgup" path="res://src/assets/ui-assets/ArrowSharpVariant2.png" id="4_bheb3"]
+[ext_resource type="Texture2D" uid="uid://dpymycyuiluc0" path="res://src/assets/ui-assets/ClipBoard.png" id="5_bheb3"]
 
 [node name="PatientInterview" type="Node2D" unique_id=1148397498]
 
-[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=861252414]
+[node name="2dbg" type="Sprite2D" parent="." unique_id=1421212599]
+position = Vector2(960.00006, 590)
+scale = Vector2(1.2617188, 1.2617188)
+texture = ExtResource("1_8o041")
 
-[node name="TextureRect" type="TextureRect" parent="CanvasLayer" unique_id=1797920049]
-anchors_preset = 15
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1758703768]
+
+[node name="CenterContainer2" type="CenterContainer" parent="CanvasLayer" unique_id=684206099]
+custom_minimum_size = Vector2(1000, 0)
+anchors_preset = 11
+anchor_left = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-grow_horizontal = 2
+offset_left = -1000.0
+grow_horizontal = 0
 grow_vertical = 2
-texture = ExtResource("1_8o041")
-expand_mode = 2
-stretch_mode = 6
+
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer/CenterContainer2" unique_id=612067489]
+custom_minimum_size = Vector2(700, 1080)
+layout_mode = 2
+texture = ExtResource("5_bheb3")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer" unique_id=1210505894]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 97.0
+offset_top = -168.0
+offset_right = -903.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="CenterContainer" type="CenterContainer" parent="CanvasLayer/HBoxContainer" unique_id=1742238862]
+layout_mode = 2
+
+[node name="Panel" type="Panel" parent="CanvasLayer/HBoxContainer/CenterContainer" unique_id=60499639]
+custom_minimum_size = Vector2(800, 70)
+layout_mode = 2
+theme = ExtResource("2_qmotm")
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/HBoxContainer/CenterContainer" unique_id=957119400]
+custom_minimum_size = Vector2(800, 70)
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 0
+
+[node name="TextEdit" type="TextEdit" parent="CanvasLayer/HBoxContainer/CenterContainer/MarginContainer" unique_id=867485531]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme = ExtResource("2_qmotm")
+theme_override_font_sizes/font_size = 40
+placeholder_text = "Enter Here"
+
+[node name="CenterContainer2" type="CenterContainer" parent="CanvasLayer/HBoxContainer" unique_id=680241120]
+layout_mode = 2
+
+[node name="TextureButton" type="TextureButton" parent="CanvasLayer/HBoxContainer/CenterContainer2" unique_id=2027696167]
+custom_minimum_size = Vector2(100, 100)
+layout_mode = 2
+theme = ExtResource("2_qmotm")
+texture_normal = ExtResource("3_gbso1")
+texture_pressed = ExtResource("4_bheb3")
+ignore_texture_size = true
+stretch_mode = 4
