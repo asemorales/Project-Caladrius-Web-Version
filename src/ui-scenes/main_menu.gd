@@ -24,3 +24,7 @@ func _on_settings_button_pressed() -> void:
 
 func _on_exit_only_button_pressed() -> void:
 	open_start_menu()
+
+#This is just for testing. Delete in Future
+func _on_start_button_pressed() -> void:
+	visible = false

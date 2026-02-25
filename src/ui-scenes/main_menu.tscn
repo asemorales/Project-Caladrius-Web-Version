@@ -247,6 +247,7 @@ theme = ExtResource("2_jkw8p")
 theme_override_font_sizes/font_size = 50
 text = "Exit Only"
 
+[connection signal="pressed" from="StartMenu/VBoxContainer/CenterContainer/StartMenuButtons/StartButton" to="." method="_on_start_button_pressed"]
 [connection signal="pressed" from="StartMenu/VBoxContainer/CenterContainer/StartMenuButtons/SettingsButton" to="." method="_on_settings_button_pressed"]
 [connection signal="pressed" from="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/VBoxContainer/MicrophoneOption" to="SettingsMenu" method="_on_microphone_option_pressed"]
 [connection signal="pressed" from="SettingsMenu/VBoxContainer/HBoxContainer2/ExitOnlyButton" to="." method="_on_exit_only_button_pressed"]

@@ -12,7 +12,6 @@ script = ExtResource("1_gh0ne")
 
 [node name="MainMenuLayer" type="CanvasLayer" parent="." unique_id=1455390612]
 layer = 2
-visible = false
 
 [node name="MainMenu" parent="MainMenuLayer" unique_id=1989057295 instance=ExtResource("2_3cfgd")]
 
