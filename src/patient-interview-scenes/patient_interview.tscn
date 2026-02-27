@@ -82,7 +82,7 @@ horizontal_alignment = 1
 layout_mode = 2
 theme = ExtResource("2_qmotm")
 theme_override_font_sizes/normal_font_size = 20
-text = "gfdgdgdfgdgffgdgg"
+text = "Mentor "
 fit_content = true
 
 [node name="CenterContainer" type="CenterContainer" parent="CanvasLayer/CenterContainer2/VBoxContainer" unique_id=1280755575]
