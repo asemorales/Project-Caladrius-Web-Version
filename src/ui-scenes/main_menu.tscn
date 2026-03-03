@@ -253,5 +253,6 @@ text = "Exit Only"
 [connection signal="item_selected" from="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/TextToSpeechOption" to="SettingsMenu" method="_on_text_to_speech_option_selected"]
 [connection signal="item_selected" from="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/SpeechToTextOption" to="SettingsMenu" method="_on_speech_to_text_option_selected"]
 [connection signal="pressed" from="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/VBoxContainer/MicrophoneOption" to="SettingsMenu" method="_on_microphone_option_pressed"]
-[connection signal="pressed" from="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/VBoxContainer/Button" to="SettingsMenu" method="_on_save_and_exit_button_pressed"]
+[connection signal="pressed" from="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/VBoxContainer/Button" to="SettingsMenu" method="_on_test_microphone_button_pressed"]
+[connection signal="pressed" from="SettingsMenu/VBoxContainer/HBoxContainer2/SaveAndExitButton" to="SettingsMenu" method="_on_save_and_exit_button_pressed"]
 [connection signal="pressed" from="SettingsMenu/VBoxContainer/HBoxContainer2/ExitOnlyButton" to="." method="_on_exit_only_button_pressed"]
