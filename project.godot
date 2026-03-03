@@ -22,6 +22,10 @@ buses/default_bus_layout="uid://dajduljj2r1ie"
 general/text_to_speech=true
 driver/enable_input=true
 
+[autoload]
+
+Globals="*uid://dn2m2php54ney"
+
 [display]
 
 window/size/viewport_width=1920
