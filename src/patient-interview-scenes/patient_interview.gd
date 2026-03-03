@@ -136,8 +136,8 @@ func _on_request_completed(result, response_code, request_headers, body) -> void
 	transcript.append_text("Patient: " + message["content"] + "\n")
 
 	# DEBUG
-	for msg in _messages:
-		print(msg["content"])
+	# for msg in _messages:
+	# 	print(msg["content"])
 	
 	# Signal that a response was received from the patient AI
 	# _is_calling_chatgpt = false
