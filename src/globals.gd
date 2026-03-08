@@ -12,3 +12,6 @@ var master_password: String = "HsZ#Aefxj&H&8u$gd^$UU$%5y5j!UK6BjCXWMmpsne#^GNDda
 var tts: int
 var stt: int
 var volume: float
+
+# Patient
+var language: int
