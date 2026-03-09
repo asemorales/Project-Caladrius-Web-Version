@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://bbkqf4vf8h2h2" path="res://src/assets/ui-assets/ArrowSharpVariant1.png" id="3_gbso1"]
 [ext_resource type="Texture2D" uid="uid://b47p7hbqamgup" path="res://src/assets/ui-assets/ArrowSharpVariant2.png" id="4_bheb3"]
 [ext_resource type="Texture2D" uid="uid://dpymycyuiluc0" path="res://src/assets/ui-assets/ClipBoard.png" id="5_bheb3"]
+[ext_resource type="PackedScene" uid="uid://c0asx3ckdppno" path="res://src/patient-interview-scenes/patient.tscn" id="7_1ei3v"]
 
 [node name="PatientInterview" type="Node2D" unique_id=1148397498]
 script = ExtResource("1_5yvnx")
@@ -142,5 +143,9 @@ texture_normal = ExtResource("3_gbso1")
 texture_pressed = ExtResource("4_bheb3")
 ignore_texture_size = true
 stretch_mode = 4
+
+[node name="Patient" parent="." unique_id=1731652583 instance=ExtResource("7_1ei3v")]
+position = Vector2(475, 795)
+scale = Vector2(2, 2)
 
 [connection signal="pressed" from="CanvasLayer/HBoxContainer/CenterContainer2/EnterButton" to="." method="_on_enter_button_pressed"]
