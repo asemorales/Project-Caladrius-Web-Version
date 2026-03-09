@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bvxdn4liogxc2"
-path="res://.godot/imported/Caladrius Patient Sprites New.png-058a34f2642cd83d958d819876d0a651.ctex"
+uid="uid://b606rs6mxu8n1"
+path="res://.godot/imported/CaladriusMalePatientSprite.png-24f2f607662056631ef58b0e58aa67a4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://src/assets/patient-interview-assets/Caladrius Patient Sprites New.png"
-dest_files=["res://.godot/imported/Caladrius Patient Sprites New.png-058a34f2642cd83d958d819876d0a651.ctex"]
+source_file="res://src/assets/patient-interview-assets/CaladriusMalePatientSprite.png"
+dest_files=["res://.godot/imported/CaladriusMalePatientSprite.png-24f2f607662056631ef58b0e58aa67a4.ctex"]
 
 [params]
 
