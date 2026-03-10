@@ -7,12 +7,12 @@ extends Node2D
 @export var temp: float = 1
 
 # STT
-var _stt_audio_stream_player : AudioStreamPlayer
-var _stt_audio_effect: AudioEffect
-var _mix_rate: float
 var _stt_http_request: HTTPRequest
 var _stt_endpoint: String
 var _stt_headers: PackedStringArray
+var _stt_audio_stream_player : AudioStreamPlayer2D
+var _stt_audio_effect: AudioEffect
+var _mix_rate: float
 
 # LLM
 var _chat_http_request: HTTPRequest
@@ -25,7 +25,12 @@ var _messages = []
 var _tts_http_request: HTTPRequest
 var _tts_endpoint: String
 var _tts_headers: PackedStringArray
-var _tts_audio_stream_player: AudioStreamPlayer
+var _tts_audio_stream_player: AudioStreamPlayer2D
+
+var _stored_streamed_audio: PackedByteArray
+
+var _elevenlabs_voice_id_male: String = "IKne3meq5aSn9XLyUdCD"
+var _elevenlabs_voice_id_female: String = "EXAVITQu4vr4xnSDxMaL"
 
 @onready var enter_here: TextEdit = $CanvasLayer/HBoxContainer/CenterContainer/MarginContainer/EnterHere
 @onready var transcript: RichTextLabel = $CanvasLayer/CenterContainer2/VBoxContainer/MarginContainer/Transcript
@@ -41,7 +46,7 @@ func _ready() -> void:
 	_stt_http_request.timeout = 20
 	_stt_http_request.request_completed.connect(_on_stt_request_completed)
 
-	_stt_audio_stream_player = AudioStreamPlayer.new()
+	_stt_audio_stream_player = AudioStreamPlayer2D.new()
 	_stt_audio_stream_player.stream = AudioStreamMicrophone.new()
 	_stt_audio_stream_player.set_bus("Record")
 	add_child(_stt_audio_stream_player)
@@ -64,7 +69,7 @@ func _ready() -> void:
 	_tts_http_request.timeout = 20
 	_tts_http_request.request_completed.connect(_on_tts_request_completed)
 
-	_tts_audio_stream_player = AudioStreamPlayer.new()
+	_tts_audio_stream_player = AudioStreamPlayer2D.new()
 	add_child(_tts_audio_stream_player)
 
 
@@ -125,8 +130,8 @@ func _setup_llm() -> void:
 func _setup_tts() -> void:
 	match Globals.tts:
 		0: # ElevenLabs
-			_tts_endpoint = "https://api.elevenlabs.io/v1/text-to-speech/"
-			_tts_headers = PackedStringArray(["accept: */*", "xi-api-key: " + Globals.api_keys["ElevenLabs"], "Content-Type: application/json"])
+			_tts_endpoint = "https://api.elevenlabs.io/v1/text-to-speech/" + _elevenlabs_voice_id_female
+			_tts_headers = PackedStringArray(["accept: audio/mpeg", "xi-api-key: " + Globals.api_keys["ElevenLabs"], "Content-Type: application/json"])
 		1: # Google Cloud
 			_tts_endpoint = "https://texttospeech.googleapis.com/v1/text:synthesize?key=" + Globals.api_keys["GoogleCloud"]
 			_tts_headers = PackedStringArray(["accept: */*", "xi-api-key: " + Globals.api_keys["GoogleCloud"], "Content-Type: application/json"])
@@ -254,7 +259,14 @@ func call_tts(text: String) -> void:
 
 
 func _call_ElevenLabs_tts(text: String) -> void:
-	pass
+	var body = JSON.stringify({
+		"text": text,
+		"model_id": "eleven_flash_v2_5",
+		"language_code": "en",
+		"voice_settings": {"stability": 0, "similarity_boost": 0}
+	})
+
+	_tts_http_request.request(_tts_endpoint, _tts_headers, HTTPClient.METHOD_POST, body)
 
 
 func _call_GoogleCloud_tts(text: String) -> void:
@@ -282,16 +294,16 @@ func _on_stt_request_completed(result, response_code, request_headers, body) -> 
 
 	# Check if there is a transcription
 	if response.get("results"):
-		var transcript = ""
+		var generated_transcript = ""
 		for e in response["results"]:
 			if e.get("alternatives"):
 				if e["alternatives"][0].get("transcript"):
 					no_alternatives = false
-					transcript += e["alternatives"][0]["transcript"]
+					generated_transcript += e["alternatives"][0]["transcript"]
 		if not no_alternatives:
-			print("Transcript:")
-			print(transcript)
-			# chatgpt_http_request.call_ChatGPT(transcript)
+			transcript.append_text("Doctor: " + generated_transcript + "\n")
+
+			call_llm(generated_transcript)
 
 	# No audio was detected
 	else:
@@ -350,7 +362,7 @@ func _on_llm_request_completed(result, response_code, request_headers, body) -> 
 	# print("Consultee response: " + message_text)
 
 	# # Send the response to a TTS service
-	# _npc.call_tts(message_text)
+	call_tts(message["content"])
 
 	# # Save a local transcript of the conversation
 	# save_convo()
@@ -358,4 +370,25 @@ func _on_llm_request_completed(result, response_code, request_headers, body) -> 
 
 
 func _on_tts_request_completed(result, response_code, request_headers, body) -> void:
-	pass
+	if result == HTTPRequest.RESULT_TIMEOUT:
+		printerr("ElevenLabs request timed out!")
+		return
+	
+	if response_code != 200:
+		printerr("There was an error with ElevenLabs' response, response code:" + str(response_code))
+		print(result)
+		print(request_headers)
+		print(body.get_string_from_utf8())
+		return
+	
+	print("TTS Body:")
+	print(body)
+
+	_stored_streamed_audio.append_array(body)
+
+	var elevenlabs_stream: AudioStreamMP3 = AudioStreamMP3.new()
+	elevenlabs_stream.data = _stored_streamed_audio
+
+	_tts_audio_stream_player.set_stream(elevenlabs_stream)
+	_tts_audio_stream_player.play()
+	# _stored_streamed_audio.resize(0)
