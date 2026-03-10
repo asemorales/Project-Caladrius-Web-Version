@@ -380,9 +380,6 @@ func _on_tts_request_completed(result, response_code, request_headers, body) -> 
 		print(request_headers)
 		print(body.get_string_from_utf8())
 		return
-	
-	print("TTS Body:")
-	print(body)
 
 	_stored_streamed_audio.append_array(body)
 
