@@ -45,6 +45,10 @@ func _on_start_button_pressed() -> void:
 		print("Loaded secrets via web!")
 
 		await Globals.secrets_loaded
+
+		# Get Google auth token
+		_authenticate()
+
 	else:
 		if FileAccess.file_exists("res://src/auth/secrets.json"):
 			# Get the data
@@ -86,3 +90,63 @@ func _on_secrets_loaded(data: Array):
 	Globals.key_file = dup["key_file"]
 	Globals.key_file2 = dup["key_file2"]
 	Globals.secrets_loaded.emit()
+
+
+# Request a new access/authentication token
+func _authenticate() -> void:
+	# Build an appropriate JWT
+	var jwt: String = _create_jwt()
+
+	# Call the javascript function and pass the JWT to it
+	JavaScriptBridge.eval("""authenticate_Google(\'%s\')""" % jwt)
+
+
+# Helper function required for Google authentication to create a JSON Web Token (JWT)
+func _create_jwt() -> String:
+	# Access the Google Service account's key file
+	# var file: FileAccess = FileAccess.open("res://auth/key_file2.json", FileAccess.READ)
+	# var content_as_text: String = file.get_as_text()
+	# var content_as_dictionary = JSON.parse_string(content_as_text)
+
+	# WARNING: DO NOT PUSH THIS
+	var content_as_dictionary = Globals.key_file2
+
+	# Define the JWT header
+	var jwt_header: Dictionary = {
+		"alg": "RS256",
+		"typ": "JWT",
+		"kid": content_as_dictionary["private_key_id"]
+	}
+
+	# Build the JWT claim set
+	var requested_time = Time.get_unix_time_from_system()
+	var jwt_claim_set: Dictionary = {
+		"iss": content_as_dictionary["client_email"],
+		"scope": "https://www.googleapis.com/auth/spreadsheets",
+		"aud": "https://oauth2.googleapis.com/token",
+		"exp": requested_time + 3600,
+		"iat": requested_time
+	}
+	
+	# Convert base64 encoding to base64url encoding and build the raw signature
+	var base64url_jwt_header: String = _base64_to_base64url(Marshalls.utf8_to_base64(JSON.stringify(jwt_header)))
+	var base64url_jwt_claim_set: String = _base64_to_base64url(Marshalls.utf8_to_base64(JSON.stringify(jwt_claim_set)))
+	var raw_sig: String = base64url_jwt_header + "." + base64url_jwt_claim_set
+	
+	# Sign the JWT
+	var crypto: Crypto = Crypto.new()
+	var key: CryptoKey = CryptoKey.new()
+	var private_key: String = content_as_dictionary["private_key"]
+	var error: int = key.load_from_string(private_key)
+	if error != 0:
+		push_error("Failed to load private key!")
+		return ""
+	var jwt_signature: PackedByteArray = crypto.sign(HashingContext.HASH_SHA256, raw_sig.sha256_buffer(), key)
+
+	# Return the built JWT
+	return raw_sig + "." + _base64_to_base64url(Marshalls.raw_to_base64(jwt_signature))
+
+
+# Helper function required for Google authentication to create a JSON Web Token (JWT)
+func _base64_to_base64url(string: String) -> String:
+	return string.replace("+", "-").replace("/", "_").replace("=", "")
