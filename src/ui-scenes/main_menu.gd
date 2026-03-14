@@ -1,6 +1,7 @@
 extends Control
 
 var _on_secrets_loaded_callback = null
+var _on_auth_token_callback = null
 
 @onready var start_menu: MarginContainer = $StartMenu
 @onready var settings_menu: MarginContainer = $SettingsMenu
@@ -34,10 +35,10 @@ func _on_start_button_pressed() -> void:
 		_on_secrets_loaded_callback = JavaScriptBridge.create_callback(_on_secrets_loaded)
 
 		# Retrieve the 'gd_callbacks' object
-		var gdcallbacks: JavaScriptObject = JavaScriptBridge.get_interface("gd_callbacks")
+		var secrets_callback: JavaScriptObject = JavaScriptBridge.get_interface("secrets_callback")
 
 		# Assign the callbacks
-		gdcallbacks.dataLoaded = _on_secrets_loaded_callback
+		secrets_callback.dataLoaded = _on_secrets_loaded_callback
 
 		# Load secrets
 		JavaScriptBridge.eval("loadData()")
@@ -97,7 +98,16 @@ func _authenticate() -> void:
 	# Build an appropriate JWT
 	var jwt: String = _create_jwt()
 
-	# Call the javascript function and pass the JWT to it
+	# Create callback to get auth token through Javascript
+	_on_auth_token_callback = JavaScriptBridge.create_callback(_on_auth_token_loaded)
+
+	# Retrieve the 'gd_callbacks' object
+	var auth_token_callback: JavaScriptObject = JavaScriptBridge.get_interface("auth_token_callback")
+
+	# Assign the callbacks
+	auth_token_callback.dataLoaded = _on_auth_token_callback
+
+	# Call the Javascript function and pass the JWT to it
 	JavaScriptBridge.eval("""authenticate_Google(\'%s\')""" % jwt)
 
 
@@ -150,3 +160,18 @@ func _create_jwt() -> String:
 # Helper function required for Google authentication to create a JSON Web Token (JWT)
 func _base64_to_base64url(string: String) -> String:
 	return string.replace("+", "-").replace("/", "_").replace("=", "")
+
+
+func _on_auth_token_loaded(data: Array):
+	if data.size() == 0:
+		return
+	
+	var json: JSON = JSON.new()
+	var json_parse_result: int = json.parse(data[0])
+	if not json_parse_result == OK:
+		printerr("secrets (web) can't be parsed as a json object")
+		return
+
+	var dup = json.data.duplicate(true)
+	print(dup["access_token"])
+	Globals.google_auth_token = dup["access_token"]
