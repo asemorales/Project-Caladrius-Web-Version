@@ -1,13 +1,29 @@
 extends Control
 
+signal obtained_info
+signal obtained_histories
+signal obtained_medications
+signal obtained_immunizations
+
+var _database_httprequest: HTTPRequest
 var _on_secrets_loaded_callback = null
 var _on_auth_token_callback = null
+var _on_patient_info_callback = null
+var _on_patient_history_callback = null
+var _on_patient_medications_callback = null
+var _on_patient_immunizations_callback = null
 
 @onready var start_menu: MarginContainer = $StartMenu
 @onready var settings_menu: MarginContainer = $SettingsMenu
 
 
 func _ready() -> void:
+	Globals.patient = Patient.new()
+
+	_database_httprequest = HTTPRequest.new()
+	_database_httprequest.timeout = 20
+	add_child(_database_httprequest)
+
 	open_start_menu()
 
 
@@ -50,6 +66,20 @@ func _on_start_button_pressed() -> void:
 		# Get Google auth token
 		_authenticate()
 
+		await Globals.auth_token_loaded
+
+		# Get patient from database
+		var row = 3 + 1 # 1 = patient number
+		_get_sheet_database("Patient", "A" + str(row), "HK" + str(row))
+		await obtained_info
+
+		print(Globals.patient.info)
+		# _get_sheet_database("History_of_Present_Illness", "A1", "D" + str(_num_histories + 1))
+		# await obtained_histories
+		# _get_sheet_database("Medications", "A1", "F" + str(_num_medications + 1))
+		# await obtained_medications
+		# _get_sheet_database("Immunizations", "A1", "D" + str(_num_immunizations + 1))
+		# await obtained_immunizations
 	else:
 		if FileAccess.file_exists("res://src/auth/secrets.json"):
 			# Get the data
@@ -173,5 +203,190 @@ func _on_auth_token_loaded(data: Array):
 		return
 
 	var dup = json.data.duplicate(true)
-	print(dup["access_token"])
 	Globals.google_auth_token = dup["access_token"]
+
+	Globals.auth_token_loaded.emit()
+
+
+# TO DO: Retrieve patient data through Javascript
+func _get_sheet_database(sheet_name: String, range_start: String, range_end: String) -> void:
+	match sheet_name:
+		"Patient":
+			_on_patient_info_callback = JavaScriptBridge.create_callback(_on_patient_info_loaded)
+
+			# Retrieve the 'gd_callbacks' object
+			var patient_info_callback: JavaScriptObject = JavaScriptBridge.get_interface("patient_info_callback")
+
+			# Assign the callbacks
+			patient_info_callback.dataLoaded = _on_patient_info_callback
+		"History_of_Present_Illness":
+			pass
+		"Medications":
+			pass
+		"Immunizations":
+			pass
+		# "Database_Parameters":
+		# 	_database_httprequest.request_completed.connect(_on_params_sheet_request_completed)
+		_:
+			push_warning("Unsupported sheet name in patient database!")
+	
+	JavaScriptBridge.eval("""fetch_database_data(\'%s\', \'%s\', \'%s\', \'%s\')""" % [Globals.google_auth_token, sheet_name, range_start, range_end])
+
+
+
+# Called when the HTTP request to retrieve patient data is resolved
+func _on_patient_info_loaded(data: Array) -> void:
+	if data.size() == 0:
+		return
+	
+	var json: JSON = JSON.new()
+	var json_parse_result: int = json.parse(data[0])
+	if not json_parse_result == OK:
+		printerr("patient info can't be parsed as a json object")
+		return
+	
+	var dup = json.data.duplicate(true)
+	Globals.patient.set_info(dup["values"][0])
+
+	obtained_info.emit()
+	
+
+
+# Called when the HTTP request to retrieve patient history data is resolved
+# TO DO: Refactor
+func _on_history_sheet_request_completed(result, response_code, request_headers, body) -> void:
+	# Check if there was a problem retrieving the data
+	var json: JSON = JSON.new()
+	if response_code != 200:
+		print("There was an error with Google Sheet's response, response code:" + str(response_code))
+		print(result)
+		print(request_headers)
+		print(body.get_string_from_utf8())
+
+		# # Fall back to local database copy if one exists
+		# if FileAccess.file_exists("database.dat"):
+		# 	print("Falling back to local copy!")
+		# 	var database_file: FileAccess = FileAccess.open_encrypted_with_pass("user://database.dat", FileAccess.READ, GlobalVars.master_password)
+		# 	var json_string: String = database_file.get_line()
+		# 	database_file.close()
+		# 	var parse_result = json.parse(json_string)
+		# 	if not parse_result == OK:
+		# 		print("JSON Parse Error: ", json.get_error_message(), " in ", json_string, " at line ", json.get_error_line())
+		# 	history_data_file = json.data["history database"]
+		# 	obtained_histories.emit()
+
+		# 	return
+
+	# If successful, process retrieved data
+	json.parse(body.get_string_from_utf8())
+	var response = json.get_data()
+	var values = response["values"]
+	var history: Dictionary = {}
+	for i in range(len(values)):
+		if i == 0:
+			continue
+		
+		if values[i][0] + " " + values[i][1] not in history:
+			history[values[i][0] + " " + values[i][1]] = values[i][2]
+		else:
+			history[values[i][0] + " " + values[i][1]] += "; " + values[i][2]
+	
+	# Save data into a variable
+	Globals.patient.set_history(history)
+
+	# Signal that patient history is ready for use
+	obtained_histories.emit()
+
+
+# Called when the HTTP request to retrieve medication data is resolved
+# TO DO: Refactor
+func _on_medications_sheet_request_completed(result, response_code, request_headers, body) -> void:
+	# Check if there was a problem retrieving the data
+	var json: JSON = JSON.new()
+	if response_code != 200:
+		print("There was an error with Google Sheet's response, response code:" + str(response_code))
+		print(result)
+		print(request_headers)
+		print(body.get_string_from_utf8())
+
+		# # Fall back to local database copy if one exists
+		# if FileAccess.file_exists("database.dat"):
+		# 	print("Falling back to local copy!")
+		# 	var database_file: FileAccess = FileAccess.open_encrypted_with_pass("user://database.dat", FileAccess.READ, GlobalVars.master_password)
+		# 	var json_string: String = database_file.get_line()
+		# 	database_file.close()
+		# 	var parse_result: int = json.parse(json_string)
+		# 	if not parse_result == OK:
+		# 		print("JSON Parse Error: ", json.get_error_message(), " in ", json_string, " at line ", json.get_error_line())
+		# 	medications_data_file = json.data["medications database"]
+		# 	obtained_medications.emit()
+
+		# 	return
+
+	# If successful, process retrieved data
+	json.parse(body.get_string_from_utf8())
+	var response = json.get_data()
+	var values = response["values"]
+	
+	var medication: Dictionary = {}
+	for i in range(len(values)):
+		if i == 0:
+			continue
+		
+		if values[i][0] + " " + values[i][1] not in medication:
+			medication[values[i][0] + " " + values[i][1]] = values[i][4] + " of " + values[i][2] + " (" + values[i][3] + ") via " + values[i][5] + " administration route"
+		else:
+			medication[values[i][0] + " " + values[i][1]] += "; " + values[i][4] + " of " + values[i][2] + " (" + values[i][3] + ") via " + values[i][5] + " administration route"
+	
+	# Save data into a variable
+	Globals.patient.set_medications(medication)
+
+	# Signal that patient medication is ready for use
+	obtained_medications.emit()
+
+
+# Called when the HTTP request to retrieve patient immunization data is resolved
+# TO DO: Refactor
+func _on_immunizations_sheet_request_completed(result, response_code, request_headers, body) -> void:
+	# Check if there was a problem retrieving the data
+	var json: JSON = JSON.new()
+	if response_code != 200:
+		print("There was an error with Google Sheet's response, response code:" + str(response_code))
+		print(result)
+		print(request_headers)
+		print(body.get_string_from_utf8())
+
+		# # Fall back to local database copy if one exists
+		# if FileAccess.file_exists("database.dat"):
+		# 	print("Falling back to local copy!")
+		# 	var database_file: FileAccess = FileAccess.open_encrypted_with_pass("user://database.dat", FileAccess.READ, GlobalVars.master_password)
+		# 	var json_string: String = database_file.get_line()
+		# 	database_file.close()
+		# 	var parse_result: int = json.parse(json_string)
+		# 	if not parse_result == OK:
+		# 		print("JSON Parse Error: ", json.get_error_message(), " in ", json_string, " at line ", json.get_error_line())
+		# 	immunizations_data_file = json.data["immunizations database"]
+		# 	obtained_immunizations.emit()
+		
+		# 	return
+
+	# If successful, process retrieved data
+	json.parse(body.get_string_from_utf8())
+	var response = json.get_data()
+	var values = response["values"]
+
+	var immunization: Dictionary = {}
+	for i in range(len(values)):
+		if i == 0:
+			continue
+		
+		if values[i][0] + " " + values[i][1] not in immunization:
+			immunization[values[i][0] + " " + values[i][1]] = values[i][2] + " immunization with a dosage of " + values[i][3]
+		else:
+			immunization[values[i][0] + " " + values[i][1]] += "; " + values[i][2] + " immunization with a dosage of " + values[i][3]
+	
+	# Save data into a variable
+	Globals.patient.set_immunizations(immunization)
+
+	# Signal that patient immunization is ready for use
+	obtained_immunizations.emit()

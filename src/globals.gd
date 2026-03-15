@@ -1,6 +1,7 @@
 extends Node
 
 signal secrets_loaded
+signal auth_token_loaded
 
 # Secrets
 var api_keys: Dictionary = { }
@@ -17,4 +18,6 @@ var stt: int
 var volume: float
 
 # Patient
+var patient: Variant
 var language: int
+var personality: int
