@@ -3,23 +3,17 @@ class_name Patient
 ##
 ## Facilitates access to patient information.
 
-var headers			## Holds patient parameter field names
-var info			## Holds general patient health and background info
-var history			## Holds patient history
-var immunizations	## Holds patient immunizations
-var medications		## Holds patient medications
+var info: Array				## Holds general patient health and background info
+var history: Array[Array]			## Holds patient history
+var immunizations: Array[Array]		## Holds patient immunizations
+var medications: Array[Array]		## Holds patient medications
 
 
 func _init():
 	info = []
-	history = {}
-	medications = {}
-	immunizations = {}
-
-
-## Set the patient param names
-func set_headers(value) -> void:
-	headers = value
+	history = []
+	medications = []
+	immunizations = []
 
 
 ## Add general health and background info
@@ -28,18 +22,18 @@ func set_info(value) -> void:
 
 
 ## Add history info
-func set_history(hist) -> void:
-	history = hist
+func add_history(hist) -> void:
+	history.append(hist)
 
 
 ## Add immunization info
-func set_immunization(immun) -> void:
-	immunizations = immun
+func add_immunization(immun) -> void:
+	immunizations.append(immun)
 
 
 ## Add medication info
-func set_medication(med) -> void:
-	medications = med
+func add_medication(med) -> void:
+	medications.append(med)
 
 
 ## Convert a patient parameter to its respective index in the array
