@@ -6,7 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://bbkqf4vf8h2h2" path="res://src/assets/ui-assets/ArrowSharpVariant1.png" id="3_gbso1"]
 [ext_resource type="Texture2D" uid="uid://b47p7hbqamgup" path="res://src/assets/ui-assets/ArrowSharpVariant2.png" id="4_bheb3"]
 [ext_resource type="Texture2D" uid="uid://dpymycyuiluc0" path="res://src/assets/ui-assets/ClipBoard.png" id="5_bheb3"]
-[ext_resource type="PackedScene" uid="uid://c0asx3ckdppno" path="res://src/patient-interview-scenes/patient.tscn" id="7_1ei3v"]
+[ext_resource type="PackedScene" uid="uid://c0asx3ckdppno" path="res://src/patient-interview-scenes/patient_model.tscn" id="7_1ei3v"]
 
 [node name="PatientInterview" type="Node2D" unique_id=1148397498]
 script = ExtResource("1_5yvnx")

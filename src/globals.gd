@@ -18,6 +18,6 @@ var stt: int
 var volume: float
 
 # Patient
-var patient: Variant
+var patient: PatientData
 var language: int
 var personality: int

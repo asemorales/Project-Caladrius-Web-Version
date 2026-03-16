@@ -1,4 +1,4 @@
-class_name Patient
+class_name PatientData
 ## Holds information on the AI patient.
 ##
 ## Facilitates access to patient information.

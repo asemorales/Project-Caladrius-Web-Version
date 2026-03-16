@@ -1,6 +1,6 @@
 extends Node2D
 
-class_name Patient
+class_name PatientModel
 
 @onready var anim: AnimationPlayer = $AnimationPlayer
 

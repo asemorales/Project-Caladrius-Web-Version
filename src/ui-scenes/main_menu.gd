@@ -13,7 +13,7 @@ var _on_database_callback = null
 
 
 func _ready() -> void:
-	Globals.patient = Patient.new()
+	Globals.patient = PatientData.new()
 
 	_database_httprequest = HTTPRequest.new()
 	_database_httprequest.timeout = 20
