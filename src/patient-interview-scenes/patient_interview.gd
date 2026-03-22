@@ -336,6 +336,7 @@ func _on_tts_request_completed(result, response_code, request_headers, body) -> 
 		print(body.get_string_from_utf8())
 		return
 
+	_stored_streamed_audio.clear()
 	_stored_streamed_audio.append_array(body)
 
 	var elevenlabs_stream: AudioStreamMP3 = AudioStreamMP3.new()
@@ -371,4 +372,4 @@ func _on_transcript_loaded(data: Array) -> void:
 		return
 	
 	var dup = json.data.duplicate(true)
-	print(dup["result"])
+	call_llm(dup["result"])
