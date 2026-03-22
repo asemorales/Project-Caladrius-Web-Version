@@ -13,6 +13,8 @@ var _stt_headers: PackedStringArray
 var _stt_audio_stream_player : AudioStreamPlayer2D
 var _stt_audio_effect: AudioEffect
 var _mix_rate: float
+var _on_audio_loaded_callback = null
+var _on_transcript_loaded_callback = null
 
 # LLM
 var _chat_http_request: HTTPRequest
@@ -57,6 +59,18 @@ func _ready() -> void:
 	_mix_rate = AudioServer.get_mix_rate()
 	_mix_rate = clamp(_mix_rate, 8000, 48000)
 
+	_on_audio_loaded_callback = JavaScriptBridge.create_callback(_on_audio_loaded)
+
+	var audio_callback: JavaScriptObject = JavaScriptBridge.get_interface("audio_callback")
+
+	audio_callback.dataLoaded = _on_audio_loaded_callback
+
+	_on_transcript_loaded_callback = JavaScriptBridge.create_callback(_on_transcript_loaded)
+
+	var transcript_callback: JavaScriptObject = JavaScriptBridge.get_interface("transcript_callback")
+
+	transcript_callback.dataLoaded = _on_transcript_loaded_callback
+
 	# LLM
 	_chat_http_request = HTTPRequest.new()
 	add_child(_chat_http_request)
@@ -79,19 +93,9 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	if Input.is_action_just_pressed("Record"):
-		# Debug
-		print("Pressed Record")
-
-		# Record mic
-		_stt_audio_effect.set_recording_active(true)
+		JavaScriptBridge.eval("startRecording();")
 	elif Input.is_action_just_released("Record"):
-		# Debug
-		print("Released Record")
-
-		# Get recording and stop recording mic
-		var recording = _stt_audio_effect.get_recording()
-		_stt_audio_effect.set_recording_active(false)
-		call_stt(recording.data)
+		JavaScriptBridge.eval("stopRecording();")
 
 
 func _setup_modules() -> void:
@@ -104,7 +108,7 @@ func _setup_stt() -> void:
 	match Globals.stt:
 		0: # Google Cloud v1
 			_stt_endpoint = "https://speech.googleapis.com/v1/speech:recognize?key=" + Globals.api_keys["GoogleCloud"]
-			_stt_headers = PackedStringArray(["Content-Type: audio/wav", "accept: */*"])
+			_stt_headers = PackedStringArray(["Content-Type: audio/webm", "accept: */*"])
 		1: # Google Cloud v2
 			match Globals.language:
 				0:
@@ -155,8 +159,10 @@ func _on_enter_button_pressed() -> void:
 func call_stt(audio) -> void:
 	match Globals.stt:
 		0:
+			print("Calling Google Cloud v1 STT")
 			_call_GoogleCloud_v1_stt(audio)
 		1:
+			print("Calling Google Cloud v2 STT")
 			_call_GoogleCloud_v2_stt(audio)
 		2:
 			pass
@@ -165,24 +171,11 @@ func call_stt(audio) -> void:
 
 
 func _call_GoogleCloud_v1_stt(audio) -> void:
-	var body = JSON.stringify({
-		"config": {
-			"encoding": "LINEAR16",
-			"sampleRateHertz": clamp(_mix_rate, 8000, 48000),
-			"languageCode": "en-US",
-			"alternativeLanguageCodes": [
-				"fil-PH"
-			]
-		},
-		"audio": {
-			"content": Marshalls.raw_to_base64(audio)
-		},
-	})
-
-	var error = _stt_http_request.request(_stt_endpoint, _stt_headers, HTTPClient.METHOD_POST, body)
+	JavaScriptBridge.eval("""callGoogleSTTv1(\'%s\', \'%d\', \'%s\');""" % [audio, _mix_rate, Globals.api_keys["GoogleCloud"]])
 
 
-func _call_GoogleCloud_v2_stt(audio: AudioStreamWAV) -> void:
+func _call_GoogleCloud_v2_stt(audio) -> void:
+	print("Sending audio to Google Cloud STT v2...")
 	pass
 
 
@@ -274,44 +267,7 @@ func _call_GoogleCloud_tts(text: String) -> void:
 
 
 func _on_stt_request_completed(result, response_code, request_headers, body) -> void:
-	if result == HTTPRequest.RESULT_TIMEOUT:
-		printerr("STT request timed out!")
-		return
-	
-	if response_code != 200:
-		printerr("STT request failed!")
-		print("There was an error with Google Cloud's response, response code:" + str(response_code))
-		print(result)
-		print(request_headers)
-		print(body.get_string_from_utf8())
-		return
-	
-	# Parse the response
-	var no_alternatives = true
-	var json = JSON.new()
-	json.parse(body.get_string_from_utf8())
-	var response = json.get_data()
-
-	# Check if there is a transcription
-	if response.get("results"):
-		var generated_transcript = ""
-		for e in response["results"]:
-			if e.get("alternatives"):
-				if e["alternatives"][0].get("transcript"):
-					no_alternatives = false
-					generated_transcript += e["alternatives"][0]["transcript"]
-		if not no_alternatives:
-			transcript.append_text("Doctor: " + generated_transcript + "\n")
-
-			call_llm(generated_transcript)
-
-	# No audio was detected
-	else:
-		print("STT: No audio detected...")
-	
-	# Audio was detected but could not be transcribed
-	if no_alternatives:
-		print("STT: Audio unintelligible...")
+	pass
 
 
 func _on_llm_request_completed(result, response_code, request_headers, body) -> void:
@@ -368,7 +324,6 @@ func _on_llm_request_completed(result, response_code, request_headers, body) -> 
 	# save_convo()
 
 
-
 func _on_tts_request_completed(result, response_code, request_headers, body) -> void:
 	if result == HTTPRequest.RESULT_TIMEOUT:
 		printerr("ElevenLabs request timed out!")
@@ -389,3 +344,31 @@ func _on_tts_request_completed(result, response_code, request_headers, body) -> 
 	_tts_audio_stream_player.set_stream(elevenlabs_stream)
 	_tts_audio_stream_player.play()
 	# _stored_streamed_audio.resize(0)
+
+
+func _on_audio_loaded(data: Array) -> void:
+	if data.size() == 0:
+		return
+	
+	var json: JSON = JSON.new()
+	var json_parse_result: int = json.parse(data[0])
+	if not json_parse_result == OK:
+		printerr("patient info can't be parsed as a json object")
+		return
+	
+	var dup = json.data.duplicate(true)
+	call_stt(dup["audio"])
+
+
+func _on_transcript_loaded(data: Array) -> void:
+	if data.size() == 0:
+		return
+	
+	var json: JSON = JSON.new()
+	var json_parse_result: int = json.parse(data[0])
+	if not json_parse_result == OK:
+		printerr("patient info can't be parsed as a json object")
+		return
+	
+	var dup = json.data.duplicate(true)
+	print(dup["result"])

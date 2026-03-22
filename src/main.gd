@@ -13,16 +13,7 @@ var _access_token
 func _ready() -> void:
 	loading_screen.start_loading_screen()
 
-	# Check if authenticated and authenticate if needed
-	# if not _is_access_token_valid():
-	# 	_http_request_auth = HTTPRequest.new()
-	# 	add_child(_http_request_auth)
-	# 	_http_request_auth.request_completed.connect(_on_auth_request_completed)
-
-	# 	_authenticate()
-
-	# Retrieve database
-
+	JavaScriptBridge.eval("setupAudio();")
 
 	# await authenticated
 	await get_tree().create_timer(5).timeout

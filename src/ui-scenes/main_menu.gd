@@ -57,7 +57,7 @@ func _on_start_button_pressed() -> void:
 		secrets_callback.dataLoaded = _on_secrets_loaded_callback
 
 		# Load secrets
-		JavaScriptBridge.eval("loadData()")
+		JavaScriptBridge.eval("loadData();")
 
 		print("Loaded secrets via web!")
 
@@ -148,7 +148,7 @@ func _authenticate() -> void:
 	auth_token_callback.dataLoaded = _on_auth_token_callback
 
 	# Call the Javascript function and pass the JWT to it
-	JavaScriptBridge.eval("""authenticate_Google(\'%s\')""" % jwt)
+	JavaScriptBridge.eval("""authenticate_Google(\'%s\');""" % jwt)
 
 
 # Helper function required for Google authentication to create a JSON Web Token (JWT)
@@ -233,7 +233,7 @@ func _get_sheet_database(sheet_name: String, range_start: String, range_end: Str
 		_:
 			push_warning("Unsupported sheet name in patient database!")
 	
-	JavaScriptBridge.eval("""fetch_database_data(\'%s\', \'%s\', \'%s\', \'%s\')""" % [Globals.google_auth_token, sheet_name, range_start, range_end])
+	JavaScriptBridge.eval("""fetch_database_data(\'%s\', \'%s\', \'%s\', \'%s\');""" % [Globals.google_auth_token, sheet_name, range_start, range_end])
 
 
 func _on_database_data_loaded(data: Array) -> void:
