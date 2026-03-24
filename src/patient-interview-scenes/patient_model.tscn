@@ -1852,7 +1852,6 @@ rest = Transform2D(1, 0, 0, 1, 0, -117.034)
 [node name="Head" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck" unique_id=694714124]
 position = Vector2(0, -51.997)
 rotation = -1.5707964
-scale = Vector2(0.9998871, 0.9998871)
 rest = Transform2D(-4.371139e-08, -1, 1, -4.371139e-08, 0, -51.997)
 auto_calculate_length_and_angle = false
 length = 50.0
@@ -1860,14 +1859,12 @@ bone_angle = 0.0
 
 [node name="RightShoulder" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck" unique_id=2130839584]
 position = Vector2(-53, -13)
-scale = Vector2(0.99989116, 0.99989116)
-rest = Transform2D(1, 0, 0, 1, -53, -13)
+rest = Transform2D(1, 0, 0, 1, -37.375393, -13.156438)
 
 [node name="RightUpperArm" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck/RightShoulder" unique_id=1032285687]
 position = Vector2(-28.267689, 10.767256)
 rotation = -0.3228859
-scale = Vector2(0.9999739, 0.9999739)
-rest = Transform2D(1, 0, 0, 1, -28.267689, 10.767256)
+rest = Transform2D(1, 0, 0, 1, -41.892197, 10.977723)
 
 [node name="RightLowerArm" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck/RightShoulder/RightUpperArm" unique_id=922749738]
 position = Vector2(-62.815395, 118.63484)
@@ -1876,7 +1873,7 @@ rest = Transform2D(1, 0, 0, 1, -62.815395, 118.63484)
 [node name="RightHand" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck/RightShoulder/RightUpperArm/RightLowerArm" unique_id=1921696151]
 position = Vector2(-43, 93)
 rotation = 1.84603
-scale = Vector2(0.99999917, 0.99999917)
+scale = Vector2(0.9999999, 0.9999999)
 rest = Transform2D(-0.2717718, 0.96236163, -0.96236163, -0.2717718, -43, 93)
 auto_calculate_length_and_angle = false
 length = 50.0
@@ -1884,13 +1881,11 @@ bone_angle = 0.0
 
 [node name="LeftShoulder" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck" unique_id=299760800]
 position = Vector2(53, -13)
-scale = Vector2(0.9999136, 0.9999136)
 rest = Transform2D(1, 0, 0, 1, 53, -13)
 
 [node name="LeftUpperArm" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck/LeftShoulder" unique_id=50561363]
 position = Vector2(28.268, 10.767)
 rotation = 0.3228859
-scale = Vector2(0.9999248, 0.9999248)
 rest = Transform2D(1, 0, 0, 1, 28.268, 10.767)
 
 [node name="LeftLowerArm" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck/LeftShoulder/LeftUpperArm" unique_id=971512060]
