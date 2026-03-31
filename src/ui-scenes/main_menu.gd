@@ -78,9 +78,15 @@ func _on_start_button_pressed() -> void:
 		_get_sheet_database("Database_Parameters", "A2", "D2")
 		await obtained_database_data
 
-		var row = 3 + 1 # 1 = patient number
+		var header_row = 3
+		_get_sheet_database("Headers", "A" + str(header_row), "HK" + str(header_row))
+		await obtained_database_data
+
+		var row = 3 + 1 # 1 = patient number 1 (temporarily hard coded to patient 1 for testing)
 		_get_sheet_database("Patient", "A" + str(row), "HK" + str(row))
 		await obtained_database_data
+
+		Globals.patient.map_info()
 
 		_get_sheet_database("History_of_Present_Illness", "A1", "D" + str(_database_params["Histories"] + 1))
 		await obtained_database_data
@@ -90,6 +96,8 @@ func _on_start_button_pressed() -> void:
 
 		_get_sheet_database("Immunizations", "A1", "D" + str(_database_params["Immunizations"] + 1))
 		await obtained_database_data
+
+		Globals.patient_data_loaded.emit()
 	else:
 		if FileAccess.file_exists("res://src/auth/secrets.json"):
 			# Get the data
@@ -220,6 +228,8 @@ func _on_auth_token_loaded(data: Array):
 
 func _get_sheet_database(sheet_name: String, range_start: String, range_end: String) -> void:
 	match sheet_name:
+		"Headers":
+			pass
 		"Patient":
 			pass
 		"History_of_Present_Illness":
@@ -248,6 +258,8 @@ func _on_database_data_loaded(data: Array) -> void:
 	
 	var dup = json.data.duplicate(true)
 	match dup["sheet_name"]:
+		"Headers":
+			Globals.patient.set_info_headers(dup["values"][0])
 		"Database_Parameters":
 			_database_params["Patients"] = int(dup["values"][0][0])
 			_database_params["Histories"] = int(dup["values"][0][1])

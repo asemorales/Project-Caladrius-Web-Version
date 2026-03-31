@@ -24,6 +24,7 @@ var _chat_model: String = "ft:gpt-4o-mini-2024-07-18:ateneo-school-of-medicine-a
 var _chat_headers: PackedStringArray
 var _messages = []
 var _chat_convo = []
+var _chat_context = []
 
 # Mentor LLM
 var _mentor_http_request: HTTPRequest
@@ -33,7 +34,6 @@ var _mentor_headers: PackedStringArray
 var _mentor_messages = []
 var _mentor_convo = []
 var _mentor_context = []
-
 
 # TTS
 var _tts_http_request: HTTPRequest
@@ -53,6 +53,7 @@ var _elevenlabs_voice_id_female: String = "EXAVITQu4vr4xnSDxMaL"
 
 func _ready() -> void:
 	await Globals.secrets_loaded
+	await Globals.patient_data_loaded
 	
 	# STT
 	_stt_http_request = HTTPRequest.new()
@@ -88,6 +89,8 @@ func _ready() -> void:
 	add_child(_chat_http_request)
 	_chat_http_request.timeout = 20
 	_chat_http_request.request_completed.connect(_on_llm_request_completed)
+
+	_load_patient_context()
 
 	# Mentor LLM
 	_mentor_http_request = HTTPRequest.new()
@@ -746,3 +749,8 @@ func _load_mentor_context() -> void:
 		{'role': 'system', 'content': 'The patient has fatigue. '}, {'role': 'user', 'content': 'Just try to relax okay? Do you have fatigue?'}, {'role': 'assistant', 'content': 'Support:0.5; Fatigue:1'}, 
 		{'role': 'system', 'content': 'The patient has other general symptoms. '}, {'role': 'user', 'content': 'Everyone has problems. You just need to get over it. Do you have other general symptoms?'}, {'role': 'assistant', 'content': 'Support:0.5; Other General Symptoms:1'}
 	]
+
+
+func _load_patient_context() -> void:
+	print(Globals.patient.info_headers)
+	print(Globals.patient.info)
