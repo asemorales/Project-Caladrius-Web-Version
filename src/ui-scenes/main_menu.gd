@@ -269,19 +269,19 @@ func _on_database_data_loaded(data: Array) -> void:
 			Globals.patient.set_info(dup["values"][0])
 		"History_of_Present_Illness":
 			for history in dup["values"]:
-				if history[0] == Globals.patient.info[0] and history[1] == Globals.patient.info[1]:
+				if history[0] == Globals.patient.data[Globals.patient.data.keys()[0]] and history[1] == Globals.patient.data[Globals.patient.data.keys()[1]]:
 					var temp_array = []
 					temp_array.append_array(history.slice(2, 4))
 					Globals.patient.add_history(temp_array)
 		"Medications":
 			for medication in dup["values"]:
-				if medication[0] == Globals.patient.info[0] and medication[1] == Globals.patient.info[1]:
+				if medication[0] == Globals.patient.data[Globals.patient.data.keys()[0]] and medication[1] == Globals.patient.data[Globals.patient.data.keys()[1]]:
 					var temp_array = []
 					temp_array.append_array(medication.slice(2, 6))
 					Globals.patient.add_medication(temp_array)
 		"Immunizations":
 			for immunization in dup["values"]:
-				if immunization[0] == Globals.patient.info[0] and immunization[1] == Globals.patient.info[1]:
+				if immunization[0] == Globals.patient.data[Globals.patient.data.keys()[0]] and immunization[1] == Globals.patient.data[Globals.patient.data.keys()[1]]:
 					var temp_array = []
 					temp_array.append_array(immunization.slice(2, 4))
 					Globals.patient.add_immunization(temp_array)
