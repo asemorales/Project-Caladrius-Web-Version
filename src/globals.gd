@@ -19,5 +19,5 @@ var volume: float
 
 # Patient
 var patient: PatientData
-var language: int
-var personality: int
+var language: int = 0
+var personality: int = 0

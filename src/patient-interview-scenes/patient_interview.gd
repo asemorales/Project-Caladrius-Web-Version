@@ -10,6 +10,7 @@ extends Node2D
 var _stt_http_request: HTTPRequest
 var _stt_endpoint: String
 var _stt_headers: PackedStringArray
+var _lang_code: String
 var _stt_audio_stream_player : AudioStreamPlayer2D
 var _stt_audio_effect: AudioEffect
 var _mix_rate: float
@@ -112,15 +113,15 @@ func _setup_stt() -> void:
 		1: # Google Cloud v2
 			match Globals.language:
 				0:
-					pass
+					_stt_endpoint = "https://asia-southeast1-speech.googleapis.com/v2/projects/spatial-ship-433309-m0/locations/asia-southeast1/recognizers/godot-asmph-recognizer-eng:recognize"
 				1:
-					pass
-				_:
-					pass
-			_stt_endpoint = ""
+					_stt_endpoint = "https://asia-southeast1-speech.googleapis.com/v2/projects/spatial-ship-433309-m0/locations/asia-southeast1/recognizers/godot-asmph-recognizer-fil:recognize"
+				_: # Default to English
+					_stt_endpoint = "https://asia-southeast1-speech.googleapis.com/v2/projects/spatial-ship-433309-m0/locations/asia-southeast1/recognizers/godot-asmph-recognizer-eng:recognize"
 			
-			_stt_headers = PackedStringArray([])
-		2: # Local STT
+			_lang_code = "en-US" if Globals.language == 0 else "fil-PH"
+			_stt_headers = PackedStringArray(["Authorization: Bearer " + Globals.google_auth_token, "Content-Type: audio/webm", "accept: */*", "Format: WEBM_OPUS"])
+		2: # Local / Godot STT
 			_stt_endpoint = ""
 			_stt_headers = PackedStringArray([])
 		_:
@@ -175,8 +176,7 @@ func _call_GoogleCloud_v1_stt(audio) -> void:
 
 
 func _call_GoogleCloud_v2_stt(audio) -> void:
-	print("Sending audio to Google Cloud STT v2...")
-	pass
+	JavaScriptBridge.eval("""callGoogleSTTv2(\'%s\', \'%s\', \'%d\', \'%s\', \'%s\');""" % [_stt_endpoint, _lang_code, _mix_rate, audio, Globals.google_auth_token])
 
 
 ## Sends text to the llm module to receive a response
