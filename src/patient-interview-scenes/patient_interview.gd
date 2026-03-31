@@ -263,7 +263,21 @@ func _call_ElevenLabs_tts(text: String) -> void:
 
 
 func _call_GoogleCloud_tts(text: String) -> void:
-	pass
+	var body = JSON.stringify({
+		"input": {
+			"text": text
+		},
+		"voice": {
+			"languageCode": "fil-PH",
+			"name": "fil-PH-Wavenet-A",
+			"ssmlGender": "FEMALE"
+		},
+		"audioConfig": {
+			"audioEncoding": "MP3"
+		}
+	})
+
+	_tts_http_request.request(_tts_endpoint, _tts_headers, HTTPClient.METHOD_POST, body)
 
 
 func _on_stt_request_completed(result, response_code, request_headers, body) -> void:
@@ -326,11 +340,11 @@ func _on_llm_request_completed(result, response_code, request_headers, body) -> 
 
 func _on_tts_request_completed(result, response_code, request_headers, body) -> void:
 	if result == HTTPRequest.RESULT_TIMEOUT:
-		printerr("ElevenLabs request timed out!")
+		printerr("TTS request timed out!")
 		return
 	
 	if response_code != 200:
-		printerr("There was an error with ElevenLabs' response, response code:" + str(response_code))
+		printerr("There was an error with the TTS module's response, response code:" + str(response_code))
 		print(result)
 		print(request_headers)
 		print(body.get_string_from_utf8())
@@ -339,10 +353,10 @@ func _on_tts_request_completed(result, response_code, request_headers, body) -> 
 	_stored_streamed_audio.clear()
 	_stored_streamed_audio.append_array(body)
 
-	var elevenlabs_stream: AudioStreamMP3 = AudioStreamMP3.new()
-	elevenlabs_stream.data = _stored_streamed_audio
+	var audio_stream: AudioStreamMP3 = AudioStreamMP3.new()
+	audio_stream.data = _stored_streamed_audio
 
-	_tts_audio_stream_player.set_stream(elevenlabs_stream)
+	_tts_audio_stream_player.set_stream(audio_stream)
 	_tts_audio_stream_player.play()
 	# _stored_streamed_audio.resize(0)
 
