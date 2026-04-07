@@ -2,6 +2,7 @@ extends Node
 
 signal secrets_loaded
 signal auth_token_loaded
+signal patient_data_loaded
 
 # Secrets
 var api_keys: Dictionary = { }
