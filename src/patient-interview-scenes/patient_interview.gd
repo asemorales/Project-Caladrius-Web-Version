@@ -752,5 +752,1541 @@ func _load_mentor_context() -> void:
 
 
 func _load_patient_context() -> void:
-	print(Globals.patient.info_headers)
-	print(Globals.patient.info)
+	var headers = Globals.patient.data.keys()
+
+	print(headers.size())
+
+	# Add extra context if personality is set to Aggressive
+	var aggression = ""
+	if Globals.personality == 2:
+		aggression = "This is a sensitive question and you must answer aggressively and defensively. You are an uncooperative and aggressive patient that must answer questions very shortly and to the point but must be defensive when asked about sensitive topics. Add phrases like 'that's personal', or 'you're asking too many questions', or 'that's none of your business', or 'why are you even asking me that'. "
+	
+	# Pick a name from a list of names for the patient
+	var NA = ["", "Not Applicable", "N/A", "NA", "not applicable"]
+	var f_names = ["Alex", "Bailey", "Casey", "Devin", "Emerson", "Finley", "Gray", "Hayden", "Indigo", "Jordan", "Kai", "Logan", "Morgan", "Nico", "Oakley", "Phoenix", "Quinn", "Reese", "Skyler", "Taylor", "Umi", "Vaughn", "Wren", "Xoan", "Yael", "Zephyr"]
+	var l_names = ["Anderson", "Bailey", "Carter", "Dawson", "Ellis", "Finch", "Garland", "Hayes", "Irwin", "Jensen", "Kennedy", "Lawson", "Monroe", "Nolan", "Oakley", "Parker", "Quinn", "Reed", "Sawyer", "Taylor", "Underwood", "Vega", "Wallace", "Xavier", "Young", "Zimmerman"]
+	
+	# BASIC INFO
+	var _name_first = f_names[(Globals.patient.data[headers[0]].unicode_at(0))-65]
+	var _name_last = l_names[(Globals.patient.data[headers[1]].unicode_at(0))-65]
+	var _doc_first = f_names[(Globals.patient.data[headers[2]].unicode_at(0))-65]
+	var _doc_last = l_names[(Globals.patient.data[headers[3]].unicode_at(0))-65]
+	
+	_messages += [
+		{"role": "system", "content": "You are a patient named %s %s. You are visiting for a consultation." % [_name_first, _name_last]}, # Globals.patient.info[0], Globals.patient.info[1]
+		{"role": "system", "content": "Your attending physician is %s %s." % [_doc_first, _doc_last]} # Globals.patient.info[2], Globals.patient.info[3]
+	]
+
+	# PESRONAL AND SOCIAL HISTORY
+	if Globals.patient.data[headers[5]] not in NA:
+		_messages += [{"role": "system", "content": "Your birthday is %s (YYYY-MM-DD). You must answer in the format 'Month Day, Year'." % [Globals.patient.data[headers[5]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You must say that you do not want to share your birth date."}]
+	
+	var _language_formatted
+	# if Globals.allow_select_language:
+	# 	_language_formatted = Globals.patient_language if Globals.patient_language == "English" else ("Filipino" if Globals.patient_language == "Tagalog" else ("either English or Filipino"))
+	# else:
+	# 	_language_formatted = Globals.patient.data[headers[22]] if Globals.patient.data[headers[22]] == "English" or Globals.patient.data[headers[22]] == "Filipino" else "either English or Filipino"
+	_language_formatted = Globals.patient.data[headers[22]] if Globals.patient.data[headers[22]] == "English" or Globals.patient.data[headers[22]] == "Filipino" else "either English or Filipino"
+	
+	for i in range(6, 25):
+		if headers[i] == "Language":
+			_messages += [{"role": "system", "content": "You must only use %s when communicating, use this language when communicating. When you are asked a question in a different language, you must act confused. When you are asked to speak in a different language than %s, you must deny the request. You should answer concisely, do not give out too much information in one response." % [_language_formatted, _language_formatted]}]
+		elif Globals.patient.data[headers[i]] not in NA:
+			_messages += [{"role": "system", "content": "%sYour %s is %s." % [aggression if headers[i] in ['Dwelling Type (House, Apt.)', 'Number Of Rooms', 'Appliances (Radio, Tv, Refrigerator) *Can Be Multiple', 'Annual Family Income'] else "", headers[i], Globals.patient.data[headers[i]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sYour %s is not known. You must say that you do not know %s." % [aggression if headers[i] in ['Dwelling Type (House, Apt.)', 'Number Of Rooms', 'Appliances (Radio, Tv, Refrigerator) *Can Be Multiple', 'Annual Family Income'] else "", headers[i], Globals.patient.data[headers[i]]]}]
+	
+	# PQRST PAIN ASSESSMENT
+	_messages += [
+		{"role": "system", "content": "The provocation of your pain is %s." % [Globals.patient.data[headers[28]]]},
+		{"role": "system", "content": "The quality of your pain is %s." % [Globals.patient.data[headers[29]]]},
+		{"role": "system", "content": "The region of your pain is %s." % [Globals.patient.data[headers[30]]]},
+		{"role": "system", "content": "The severity of your pain is %s/10." % [Globals.patient.data[headers[31]]]},
+		{"role": "system", "content": "The timing of your pain is %s." % [Globals.patient.data[headers[32]]]}
+	]
+
+	# HISTORY
+	_messages += [
+		{"role": "system", "content": "Your most important complaint and reason for consulting is %s." % [Globals.patient.data[headers[25]]]},
+		{"role": "system", "content": "Your main concerns about the problem is/are %s." % [Globals.patient.data[headers[26]]]}
+	]
+
+	print("History")
+	print(Globals.patient.history)
+
+	if Globals.patient.history:
+		var temp_history_str = ""
+		for hist in Globals.patient.history:
+			
+			if hist[0] not in NA and hist[1] not in NA:
+				_messages += [{"role": "system", "content": "Your history of present illness includes: %s with dosage of %s." % [hist[0], hist[1]]}]
+			if hist[0] not in NA and hist[1] in NA:
+				_messages += [{"role": "system", "content": "Your history of present illness includes: %s." % [hist[0]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your history of present illness is not known. You must say that you do not know your history of present illness."}]
+	
+	# CONTEXT: STAKEHOLDER ANALYSIS
+	if Globals.patient.data[headers[33]] not in NA:
+		_messages += [{"role": "system", "content": "%s is a decision maker for your medicinal treatment." % [Globals.patient.data[headers[33]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You are not sure about your stakeholders. You must say that you do not know about your treatment's stakeholders."}]
+	if Globals.patient.data[headers[34]] not in NA:
+		_messages += [{"role": "system", "content": "Your stakeholder is a %s for your medicinal treatment." % [Globals.patient.data[headers[34]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know about your stakeholder's interest in your issue. You must say that you do not know how important your stakeholder is in deciding your treatment."}]
+	if Globals.patient.data[headers[35]] not in NA:
+		_messages += [{"role": "system", "content": "Your stakeholder's role is %s." % [Globals.patient.data[headers[35]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You are not sure about your stakeholder's role. You must say that you do not know about your stakeholder's role."}]
+	if Globals.patient.data[headers[36]] not in NA:
+		_messages += [{"role": "system", "content": "The influence of your stakeholder's opinion on your treatment planning is %s." % [Globals.patient.data[headers[36]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You are not aware your stakeholder's level of influence over your treatment planning. You must say that you do not know how much your stakeholder's opinions affect your treatment planning."}]
+	
+	# CONTEXT: COMMUNITY FACTORS
+	if Globals.patient.data[headers[37]] not in NA:
+		_messages += [{"role": "system", "content": "You have pertinent belief/s, such as %s." % [Globals.patient.data[headers[37]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not have any pertinent beliefs. You must say that you do not want to talk about your beliefs."}]
+	if Globals.patient.data[headers[38]] not in NA:
+		_messages += [{"role": "system", "content": "%sThis will have a %s impact on your family." % [aggression, Globals.patient.data[headers[38]]]}]
+	else:
+		_messages += [{"role": "system", "content": "%sYou do not know about community factors that influence your family. You must say that you do not know of any community factors that influence your family." % [aggression]}]
+	if Globals.patient.data[headers[39]] not in NA:
+		_messages += [{"role": "system", "content": "Factors in the community like %s facilitate and help you." % [Globals.patient.data[headers[39]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You are not aware of any factors in the community that facilitate and help you. You must say that you do not know of any community factors that help you."}]
+	if Globals.patient.data[headers[40]] not in NA:
+		_messages += [{"role": "system", "content": "Factors in the community like %s hinder you." % [Globals.patient.data[headers[40]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You are not aware of any factors in the community that hinder you. You must say that you do not know of any community factors that hinder you."}]
+	if Globals.patient.data[headers[41]] not in NA:
+		_messages += [{"role": "system", "content": "Your illness gives you burdens like %s." % [Globals.patient.data[headers[41]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You are not aware of any burdens that your illness gives you. You must say that you do not know if your illness gives you burdens."}]
+	if Globals.patient.data[headers[42]] not in NA:
+		_messages += [{"role": "system", "content": "%s are pertinent legislations or policies that affect you." % [Globals.patient.data[headers[42]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You are not aware of any pertinent legislation or policies. You must say that you do not know anything about relevant legislation or policies."}]
+	
+	# NUTRITIONAL HISTORY
+	if Globals.patient.data[headers[43]] not in NA:
+		_messages += [{"role": "system", "content": "You were breastfed until %s." % [Globals.patient.data[headers[43]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know how long you were breastfed. You must say that you do not know how long you were breastfed."}]
+	if Globals.patient.data[headers[44]] not in NA:
+		_messages += [{"role": "system", "content": "You were given %s formula as a baby." % [Globals.patient.data[headers[44]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know about your consumption of formula as a baby. You must say that you don't remember anything about consuming formula as a baby."}]
+	if Globals.patient.data[headers[45]] not in NA:
+		_messages += [{"role": "system", "content": "You were weaned at %s." % [Globals.patient.data[headers[45]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your weaning age is unknown. You must say that you do not know when you transitioned from breast milk to food."}]
+	if Globals.patient.data[headers[46]] not in NA:
+		_messages += [{"role": "system", "content": "Your current diet is %s." % [Globals.patient.data[headers[46]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You must say that you are not sure about your current diet."}]
+	if Globals.patient.data[headers[47]] not in NA:
+		_messages += [{"role": "system", "content": "Your food allergy/ies is/are %s." % [Globals.patient.data[headers[47]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your food allergies are unknown. You must say that you do not know if you have any food allergies."}]
+
+	# BIRTH MATERNAL
+	if Globals.patient.data[headers[48]] not in NA:
+		_messages += [{"role": "system", "content": "Your mother's pregnancy was %s." % [Globals.patient.data[headers[48]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know anything about your mother's term. You must say you do not know how many weeks your mother carried you."}]
+	if Globals.patient.data[headers[49]] not in NA:
+		_messages += [{"role": "system", "content": "Your mother gave birth to you via %s." % [Globals.patient.data[headers[49]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know how you were delivered. You must say you do not know how you were born."}]
+	if Globals.patient.data[headers[50]] not in NA:
+		_messages += [{"role": "system", "content": "Your mother was %s years old when she gave birth to you." % [Globals.patient.data[headers[50]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You must say that you do not know how old your mother was when she gave birth to you."}]
+	if Globals.patient.data[headers[51]] not in NA:
+		_messages += [{"role": "system", "content": "Your mother has been pregnant %s times. Your mother's gravidity is %s" % [Globals.patient.data[headers[51]], Globals.patient.data[headers[51]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know how many times your mother has been pregnant."}]
+	if Globals.patient.data[headers[52]] not in NA:
+		_messages += [{"role": "system", "content": "Your mother has carried a pregnancy to at least 20 weeks %s times." % [Globals.patient.data[headers[52]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know how many times your mother has carried a pregnancy to at least 20 weeks."}]
+	if Globals.patient.data[headers[53]] not in NA:
+		_messages += [{"role": "system", "content": "Your weight when you were born is %s grams." % [Globals.patient.data[headers[53]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your birth weight is unknown. You must say that you do not know how heavy you were when you were born."}]
+	if Globals.patient.data[headers[54]] not in NA and Globals.patient.data[headers[55]] not in NA:
+		_messages += [{"role": "system", "content": "The doctor that attended to your mother during giving birth is %s %s." % [Globals.patient.data[headers[54]], Globals.patient.data[headers[55]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your mother's attending doctor during childbirth is unknown."}]
+	if Globals.patient.data[headers[56]] not in NA:
+		_messages += [{"role": "system", "content": "Your mother's perinatal cervix is %s." % [Globals.patient.data[headers[56]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know anything about your mother's perinatal cervix when you were born."}]
+	
+	# DEVELOPMENT MILESTONES
+	for i in range(57, 61):
+		if Globals.patient.data[headers[i]] not in NA:
+			_messages += [{"role": "system", "content": "Your %s developmental milestones are %s." % [headers[i], Globals.patient.data[headers[i]]]}]
+		else:
+			_messages += [{"role": "system", "content": "Your %s development milestone is unknown. You must say that you do not know about your %s development." % [headers[i], Globals.patient.data[headers[i]]]}]
+
+	# REVIEW OF SYSTEMS: GENERAL SYMPTOMS
+	for i in range(61, 66):
+		if Globals.patient.data[headers[i]] == 'Yes':
+			_messages += [{"role": "system", "content": "You have %s." % [headers[i]]}]
+		else:
+			_messages += [{"role": "system", "content": "You don't have %s." % [headers[i]]}]
+	
+	if Globals.patient.data[headers[66]] not in NA:
+		_messages += [{"role": "system", "content": "You have %s." % [Globals.patient.data[headers[66]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your other general symptoms are unknown. You must say that you do not have any other general symptoms."}]
+	
+	# REVIEW OF SYMPTOMS: MUSCULOSKELETAL OR DERMATOLOGIC
+	for i in range(67, 77):
+		if Globals.patient.data[headers[i]] == 'Yes':
+			_messages += [{"role": "system", "content": "You have %s." % [headers[i]]}]
+		else:
+			_messages += [{"role": "system", "content": "You don't have %s." % [headers[i]]}]
+	
+	if Globals.patient.data[headers[77]] not in NA:
+		_messages += [{"role": "system", "content": "You have %s." % [Globals.patient.data[headers[77]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your other musculoskeletal or dermatologic symptoms are unknown. You must say that you do not have any other symptoms that affect your muscles, bones, or skin."}]
+	
+	# GENERAL SYMPTOMS: HEENT
+	for i in range(78, 89):
+		if Globals.patient.data[headers[i]] == 'Yes':
+			_messages += [{"role": "system", "content": "You have %s." % [headers[i]]}]
+		else:
+			_messages += [{"role": "system", "content": "You don't have %s." % [headers[i]]}]
+	
+	if Globals.patient.data[headers[89]] not in NA:
+		_messages += [{"role": "system", "content": "You have %s." % [Globals.patient.data[headers[89]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your other HEENT symptoms are unknown. You must say that you do not have any other symptoms concerning your head, eyes, ears, nose, or throat."}]
+
+	if Globals.patient.data[headers[90]] == 'Yes':
+		_messages += [{"role": "system", "content": "You have shortness of breath"}]
+	else:
+		_messages += [{"role": "system", "content": "You don't have shortness of breath."}]
+	if Globals.patient.data[headers[91]] == 'Yes':
+		_messages += [{"role": "system", "content": "You cough up blood"}]
+	else:
+		_messages += [{"role": "system", "content": "You don't cough up blood."}]
+	
+	for i in range(92, 94):
+		if Globals.patient.data[headers[i]] == 'Yes':
+			_messages += [{"role": "system", "content": "You have %s." % [headers[i]]}]
+		else:
+			_messages += [{"role": "system", "content": "You don't have %s." % [headers[i]]}]
+	
+	if Globals.patient.data[headers[94]] not in NA:
+		_messages += [{"role": "system", "content": "You have %s." % [Globals.patient.data[headers[94]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your other respiratory symptoms are unknown. You must say that you do not have any other symptoms that affect your breathing."}]
+	
+	# GENERAL SYMPTOMS: CARDIOVASCULAR
+	for i in range(95, 97):
+		if Globals.patient.data[headers[i]] == 'Yes':
+			_messages += [{"role": "system", "content": "You have %s." % [headers[i]]}]
+		else:
+			_messages += [{"role": "system", "content": "You don't have %s." % [headers[i]]}]
+	
+	if Globals.patient.data[headers[97]] not in NA:
+		_messages += [{"role": "system", "content": "You faint."}]
+	else:
+		_messages += [{"role": "system", "content": "You don't faint."}]
+	if Globals.patient.data[headers[98]] not in NA:
+		_messages += [{"role": "system", "content": "You have shortness of breath while lying on your back."}]
+	else:
+		_messages += [{"role": "system", "content": "You don't have shortness of breath when lying on your back."}]
+
+	if Globals.patient.data[headers[99]] not in NA:
+		_messages += [{"role": "system", "content": "You have %s." % [Globals.patient.data[headers[99]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your other cardiovascular symptoms are unknown. You must say that you do not have any other symptoms that affect your heart or blood."}]
+	
+	# GENERAL SYMPTOMS: GASTROINTESTINAL
+	for i in range(100, 107):
+		if headers[i] == 'Dysphagia':
+			if Globals.patient.data[headers[i]] == 'Yes':
+				_messages += [{"role": "system", "content": "You have difficulty swallowing."}]
+			else:
+				_messages += [{"role": "system", "content": "You don't have difficulty swallowing."}]
+		else:
+			if Globals.patient.data[headers[i]] == 'Yes':
+				_messages += [{"role": "system", "content": "You have %s." % [headers[i]]}]
+			else:
+				_messages += [{"role": "system", "content": "You don't have %s." % [headers[i]]}]
+	
+	if Globals.patient.data[headers[107]] not in NA:
+		_messages += [{"role": "system", "content": "You have %s." % [Globals.patient.data[headers[107]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your other gastrointestinal symptoms are unknown. You must say that you do not have any other symptoms that affect your digestion."}]
+	
+	# GENERAL SYMPTOMS: GENITOURINARY
+	if Globals.patient.data[headers[108]] == 'Yes':
+		_messages += [{"role": "system", "content": "You pee a lot during the night"}]
+	else:
+		_messages += [{"role": "system", "content": "You don't pee a lot during the night ."}]
+	if Globals.patient.data[headers[109]] == 'Yes':
+		_messages += [{"role": "system", "content": "You have pain when you pee."}]
+	else:
+		_messages += [{"role": "system", "content": "You don't have pain when you pee."}]
+	if Globals.patient.data[headers[110]] == 'Yes':
+		_messages += [{"role": "system", "content": "You pee more often than average"}]
+	else:
+		_messages += [{"role": "system", "content": "You don't pee more often than average ."}]
+	if Globals.patient.data[headers[111]] == 'Yes':
+		_messages += [{"role": "system", "content": "You have blood in your urine"}]
+	else:
+		_messages += [{"role": "system", "content": "You don't have blood in your urine."}]
+	
+	if Globals.patient.data[headers[112]] not in NA:
+		_messages += [{"role": "system", "content": "You have %s." % [Globals.patient.data[headers[112]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your other genitourinary symptoms are unknown. You must say that you do not have any other symptoms that affect your urine or your reproductive system."}]
+	
+	# GENERAL SYMPTOMS: ENDOCRINE
+	for i in range(113, 118):
+		if headers[i] == "Polyuria":
+			if Globals.patient.data[headers[i]] == 'Yes':
+				_messages += [{"role": "system", "content": "You pee more than the average amount"}]
+			else:
+				_messages += [{"role": "system", "content": "You don't pee more than the average amount ."}]
+		else:
+			if Globals.patient.data[headers[i]] == 'Yes':
+				_messages += [{"role": "system", "content": "You have %s." % [Globals.patient.data[headers[i]]]}]
+			else:
+				_messages += [{"role": "system", "content": "You don't have %s." % [headers[i]]}]
+	
+	if Globals.patient.data[headers[118]] not in NA:
+		_messages += [{"role": "system", "content": "You have %s." % [Globals.patient.data[headers[118]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your other endocrine symptoms are unknown. You must say that you do not know any other symptoms that affect your hormones."}]
+	
+	# PAST MEDICAL HISTORY
+	for i in range(119, 127):
+		if Globals.patient.data[headers[i]] == 'Yes':
+			_messages += [{"role": "system", "content": "%sYou have %s." % [aggression if headers[i] in ['History of Diabetes', 'History of Psychiatric Consult', 'History of Cancer', 'Prior Surgeries/Hospitalizations'] else "", Globals.patient.data[headers[i]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sYou don't have %s." % [aggression if headers[i] in ['History of Diabetes', 'History of Psychiatric Consult', 'History of Cancer', 'Prior Surgeries/Hospitalizations'] else "", headers[i]]}]
+	
+	if Globals.patient.data[headers[131]] not in NA:
+		_messages += [{"role": "system", "content": "You have %s." % [Globals.patient.data[headers[131]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your other past medical history is unknown. You must say that you are not sure about your past medical history."}]
+	if Globals.patient.data[headers[127]] not in NA:
+		_messages += [{"role": "system", "content": "You had cancer before at %s." % [Globals.patient.data[headers[127]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your previous cancer sites are unknown. You must say that you are not sure about previous cancer sites."}]
+	if Globals.patient.data[headers[128]] not in NA:
+		_messages += [{"role": "system", "content": "You had prior surgeries or hospitalization dates on %s." % [Globals.patient.data[headers[128]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your prior surgeries or hospitalization dates are unknown. You must say that you do not remember your prior surgeries or hospitalization dates."}]
+	if Globals.patient.data[headers[129]] not in NA:
+		_messages += [{"role": "system", "content": "%sYou have had prior surgeries or hospitalization because of %s." % [aggression, Globals.patient.data[headers[129]]]}]
+	else:
+		_messages += [{"role": "system", "content": "%sYour prior surgeries or hospitalization reasons are unknown. You must say that you do not remember the reasons for your prior surgeries or hospitalizations." % [aggression]}]
+	if Globals.patient.data[headers[130]] not in NA:
+		_messages += [{"role": "system", "content": "You had history of allergies with %s." % [Globals.patient.data[headers[130]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your history of allergies is unknown. You must say that you do not know about your history of allergies."}]
+	
+	# FAMILY MEDICAL HISTORY
+	for i in range(132, 139):
+		if Globals.patient.data[headers[i]] == 'Yes':
+			_messages += [{"role": "system", "content": "%sYou have %s." % [aggression if headers[i] in ['Family History of Psychiatric Consult', 'Family History of Diabetes', 'Family History of Cardiovascular Disease', 'Family History of Cancer'] else "", headers[i]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sYou don't have %s." % [aggression if headers[i] in ['Family History of Psychiatric Consult', 'Family History of Diabetes', 'Family History of Cardiovascular Disease', 'Family History of Cancer'] else "", headers[i]]}]
+	
+	if Globals.patient.data[headers[140]] not in NA:
+		if Globals.patient.data[headers[139]] not in NA:
+			_messages += [{"role": "system", "content": "Your %s has had cancer before at %s." % [Globals.patient.data[headers[140]], Globals.patient.data[headers[139]]]}]
+		else:
+			_messages += [{"role": "system", "content": "Your %s has had cancer before." % [Globals.patient.data[headers[140]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your relationship to any cancer patient is unknown. You must say that you do not know if any of your relatives have cancer or have had cancer."}]
+	if Globals.patient.data[headers[141]] not in NA:
+		_messages += [{"role": "system", "content": "Your family has had history of allergies with %s." % [Globals.patient.data[headers[141]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your family's history of allergies is unknown. You must say that you do not know about your family's history of allergies."}]
+	if Globals.patient.data[headers[142]] not in NA:
+		_messages += [{"role": "system", "content": "Your other family history is %s." % [Globals.patient.data[headers[142]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Other details about your family history are unknown. You must say that you do not know about any other details about your family history."}]
+	if Globals.patient.data[headers[143]] not in NA:
+		_messages += [{"role": "system", "content": "Your genogram can be described as %s." % [Globals.patient.data[headers[143]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your genogram is unknown. You must say that you do not know about your family genogram."}]
+	if Globals.patient.data[headers[144]] not in NA:
+		_messages += [{"role": "system", "content": "Your social and environmental history can be described as %s." % [Globals.patient.data[headers[144]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your social and environmental history is unknown. You must say that you do not remember your social and environmental history."}]
+	
+	# GYNECOLOGIC HISTORY
+	if Globals.patient.data[headers[7]] == 'Female' and Globals.patient.data[headers[150]] not in NA:
+		if Globals.patient.data[headers[145]] not in NA:
+			_messages += [{"role": "system", "content": "%sThe start of your last period or the first day of bleeding is %s." % [aggression, Globals.patient.data[headers[145]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sThe start of your last period or your first day of bleeding is unknown. You must say that you do not remember the start of your last period or your first day of bleeding." % [aggression]}]
+		if Globals.patient.data[headers[146]] not in NA:
+			_messages += [{"role": "system", "content": "%sThe starting date of your period before your last is %s." % [aggression, Globals.patient.data[headers[146]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sThe starting date of your period before your last is unknown. You must say that you do not remember the starting date of your period before your last." % [aggression]}]
+		if Globals.patient.data[headers[147]] not in NA:
+			_messages += [{"role": "system", "content": "%sThe duration of period bleeding is %s." % [aggression, Globals.patient.data[headers[147]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sThe duration of your period bleeding is unknown. You must say that you are not sure about how long your period bleeding lasts." % [aggression]}]
+		if Globals.patient.data[headers[148]] not in NA:
+			_messages += [{"role": "system", "content": "%sThe interval of your period cycles or how long each cycle takes is %s." % [aggression, Globals.patient.data[headers[148]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sThe interval of your period cycles or how long each cycle takes is unknown. You must say that you are not sure about how long each cycle takes." % [aggression]}]
+		if Globals.patient.data[headers[149]] not in NA:
+			_messages += [{"role": "system", "content": "%sYou bleed %s mL during your period or menses." % [aggression, Globals.patient.data[headers[149]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sThe amount you bleed during your period or menses is unknown. You must say that you are not sure about how much blood you expel during your period." % [aggression]}]
+		if Globals.patient.data[headers[150]] not in NA:
+			_messages += [{"role": "system", "content": "%sYou were %s years old when you got your first period." % [aggression, Globals.patient.data[headers[150]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sYour menarche or age when you got your first period is unknown. You must say that you do not know when you had your first period." % [aggression]}]
+		if Globals.patient.data[headers[151]] not in NA:
+			_messages += [{"role": "system", "content": "%sYou were %s years old during your first sexual intercourse." % [aggression, Globals.patient.data[headers[151]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sYour coitarche or age during your first sexual intercourse is unknown. You must say that you are unsure about the first time you had sex." % [aggression]}]
+	
+	# IMMUNIZATIONS
+	for i in range(152, 161):
+		if Globals.patient.data[headers[i]] == 'Complete' or Globals.patient.data[headers[i]] == 'Incomplete':
+			_messages += [{"role": "system", "content": "You have completed the doses for %s %s." % [Globals.patient.data[headers[i]], headers[i]]}]
+		elif Globals.patient.data[headers[i]] == 'None':
+			_messages += [{"role": "system", "content": "You don't have %s." % [headers[i]]}]
+		else:
+			_messages += [{"role": "system", "content": "You are unsure about having %s. You must say that you do not know if you have %s." % [headers[i], headers[i]]}]
+	
+	# IMMUNIZATION DOSES
+	for i in range(161, 170):
+		if Globals.patient.data[headers[i]] not in NA:
+			_messages += [{"role": "system", "content": "You have had %s doses for %s." % [Globals.patient.data[headers[i]], headers[i]]}]
+		else:
+			_messages += [{"role": "system", "content": "Your doses for %s is unknown. You must say that you do not know how many %s you have had.." % [headers[i], headers[i]]}]
+	
+	print("Immunizations:")
+	print(Globals.patient.immunizations)
+
+	if Globals.patient.immunizations:
+		for immune in Globals.patient.immunizations:
+			_messages += [{"role": "system", "content": "You have %s doses of %s immunization." % [immune[1], immune[0]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your other immunizations are unknown. You must say that you are not sure about your other immunizations."}]
+	
+	# ADOLESCENT INTERVIEW
+	if 10 <= int(Globals.patient.data[headers[6]]) and int(Globals.patient.data[headers[6]]) <= 19:
+		if Globals.patient.data[headers[171]] not in NA:
+			_messages += [{"role": "system", "content": "%sWhen asked about your home, answer with %s." % [aggression, Globals.patient.data[headers[171]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sInformation about your home is unknown. You must say that you do not want to talk about your home." % [aggression]}]
+		if Globals.patient.data[headers[172]] not in NA:
+			_messages += [{"role": "system", "content": "%sWhen asked about your education, answer with %s." % [aggression, Globals.patient.data[headers[172]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sInformation about your education is unknown. You must say that you do not want to talk about your education." % [aggression]}]
+		if Globals.patient.data[headers[173]] not in NA:
+			_messages += [{"role": "system", "content": "When asked about your activities, answer with %s." % [Globals.patient.data[headers[173]]]}]
+		else:
+			_messages += [{"role": "system", "content": "Information about your activities is unknown. You must say that you do not want to talk about what you do."}]
+		if Globals.patient.data[headers[174]] not in NA:
+			_messages += [{"role": "system", "content": "%sWhen asked about drugs you have taken, answer with %s." % [aggression, Globals.patient.data[headers[174]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sInformation about drugs you have taken is unknown. You must say that you do not want to talk about drugs." % [aggression]}]
+		if Globals.patient.data[headers[175]] not in NA:
+			_messages += [{"role": "system", "content": "%sWhen asked if you have had any kind of sexual activity or anything about it, answer with %s." % [aggression, Globals.patient.data[headers[175]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sInformation about if you had any kind of sexual activity or anything about it is unknown. You must say that you do not want to talk about your sex life." % [aggression]}]
+		if Globals.patient.data[headers[176]] not in NA:
+			_messages += [{"role": "system", "content": "%sWhen asked about your history with suicide/depression, answer with %s." % [aggression, Globals.patient.data[headers[176]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sInformation about your history with suicide/depression is unknown. You must say that you do not want to talk about your suicide or depression." % [aggression]}]
+		if Globals.patient.data[headers[177]] not in NA:
+			_messages += [{"role": "system", "content": "When asked about your family, answer with %s." % [Globals.patient.data[headers[177]]]}]
+		else:
+			_messages += [{"role": "system", "content": "Information about your family is unknown. You must say that you do not want to talk about your family."}]
+		if Globals.patient.data[headers[178]] not in NA:
+			_messages += [{"role": "system", "content": "%sWhen asked about your source of income and dynamics, answer with %s." % [aggression, Globals.patient.data[headers[178]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sInformation about your source of income and dynamics is unknown. You must say that you do not want to talk about your source of income and dynamics." % [aggression]}]
+	
+	# NEUROPSYCHIATRIC EXAM
+	# ['General Appearance', 'General Behavior', 'Attitude Towards Examiner', 'Mood', 'Affect', 'Speech', 'Perceptual Disturbance', 'Stream of Thought', 'Thought Content', 'Impulse Control', 'Intellectual Capacity Global Estimate']
+	if Globals.patient.data[headers[179]] not in NA:
+		_messages += [{"role": "system", "content": "Your general appearance is that you are %s." % [Globals.patient.data[headers[179]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your general appearance is unremarkable."}]
+		
+	if Globals.patient.data[headers[180]] not in NA:
+		if Globals.patient.data[headers[180]] == 'Normal':
+			_messages += [{"role": "system", "content": "Your general behavior is normal."}]
+		else:
+			_messages += [{"role": "system", "content": "You are experiencing %s" % [Globals.patient.data[headers[180]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your general behavior is unremarkable."}]
+	
+	if Globals.patient.data[headers[181]] not in NA:
+		_messages += [{"role": "system", "content": "You are %s towards the examiner." % [Globals.patient.data[headers[181]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your attitude towards the examiner is unremarkable."}]
+	
+	if Globals.patient.data[headers[182]] not in NA:
+		_messages += [{"role": "system", "content": "You are feeling %s" % [Globals.patient.data[headers[182]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your mood is unremarkable."}]
+	
+	if Globals.patient.data[headers[183]] not in NA:
+		var affect = Globals.patient.data[headers[183]]
+		if affect == 'Inappropriate':
+			_messages += [{"role": "system", "content": "You are demonstrating emotions that do not fit the context."}]
+		elif affect == 'Appropriate':
+			_messages += [{"role": "system", "content": "You are demonstrating emotions that fit the context."}]
+		elif affect == 'Restricted':
+			_messages += [{"role": "system", "content": "You are demonstrating a narrow range of emotions."}]
+		elif affect == 'Blunted':
+			_messages += [{"role": "system", "content": "You are demonstrating a limited intensity of emotions."}]
+		elif affect == 'Flat':
+			_messages += [{"role": "system", "content": "You are not demonstrating any emotions."}]
+		elif affect == 'Broad':
+			_messages += [{"role": "system", "content": "You are able to demonstrate a broad range of emotions."}]
+	else:
+		_messages += [{"role": "system", "content": "Your affect is unremarkable."}]
+	
+	if Globals.patient.data[headers[184]] not in NA:
+		_messages += [{"role": "system", "content": "Your speech is %s." % [Globals.patient.data[headers[184]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your speech is unremarkable."}]
+	
+	if Globals.patient.data[headers[185]] not in NA:
+		var perceptualDisturbance = Globals.patient.data[headers[185]]
+		if perceptualDisturbance == 'Derealization':
+			_messages += [{"role": "system", "content": "You feel detached from your surroundings."}]
+		elif perceptualDisturbance == 'Depersonalization':
+			_messages += [{"role": "system", "content": "You feel detached and disconnected from your self."}]
+		elif perceptualDisturbance == 'Hallucinations':
+			_messages += [{"role": "system", "content": "You are having hallucinations."}]
+		elif perceptualDisturbance == 'None':
+			_messages += [{"role": "system", "content": "You are not experiencing any perceptual disturbances."}]
+	else:
+		_messages += [{"role": "system", "content": "You don't remember any perceptual disturbances."}]
+	
+	if Globals.patient.data[headers[186]] not in NA:
+		var stream_str = Globals.patient.data[headers[186]]
+		if stream_str == 'Tangentiality':
+			_messages += [{"role": "system", "content": "Your ideas are connected but you tend to go far off-topic without returning to the initial topic."}]
+		if stream_str == 'Paucity of Thought':
+			_messages += [{"role": "system", "content": "You are experiencing a paucity of thoughts."}]
+		if stream_str == 'Flight of Ideas':
+			_messages += [{"role": "system", "content": "You talk quickly and erratically, jumping between ideas and thoughts."}]
+		if stream_str == 'Looseness of Association':
+			_messages += [{"role": "system", "content": "Your ideas lack connection."}]
+		if stream_str == 'Goal Oriented':
+			_messages += [{"role": "system", "content": "Your thoughts progress linearly without veering from the subject at hand."}]
+	else:
+		_messages += [{"role": "system", "content": "Your stream of thought is unremarkable."}]
+	
+	if Globals.patient.data[headers[187]] not in NA:
+		var thought = Globals.patient.data[headers[187]]
+		if thought == 'Suicidal':
+			_messages += [{"role": "system", "content": "You are experiencing suicidal thoughts."}]
+		if thought == 'Bizzare':
+			_messages += [{"role": "system", "content": "Your thoughts can be described as bizarre."}]
+		if thought == 'Homicidal/Aggression':
+			_messages += [{"role": "system", "content": "You have homicidal thoughts and are prone to aggression."}]
+		if thought == 'Grandiosity':
+			_messages += [{"role": "system", "content": "You feel superior to others."}]
+		if thought == 'Paranoia':
+			_messages += [{"role": "system", "content": "You are overly suspicious and are prone to thinking that others are out to harm you."}]
+		if thought == 'Normal':
+			_messages += [{"role": "system", "content": "Your thoughts are normal."}]
+	else:
+		_messages += [{"role": "system", "content": "Your thoughts are unremarkable."}]
+	
+	if Globals.patient.data[headers[188]] not in NA:
+		_messages += [{"role": "system", "content": "You are %s your impulses." % [Globals.patient.data[headers[188]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your impulse control is unremarkable."}]
+	
+	if Globals.patient.data[headers[189]] not in NA:
+		_messages += [{"role": "system", "content": "Your intellectual capacity is %s." % [Globals.patient.data[headers[189]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know how smart you are on average."}]
+
+	# NEUROPSYCHIATRIC EXAM: SENSORIUM
+	# ['Consciousness', 'Other State of Consciousness', 'Attention Span', 'Attention Span Notes', 'Orientation Time', 'Orientation Place', 'Orientation Person', 'Memory', 'Memory Notes', 'Calculation', 'Calculation Notes', 'Fund of Information', 'Fund of Information Notes', 'Insight', 'Insight Notes', 'Judgment', 'Planning', 'Planning Notes', 'Speech Others', 'Other High Cortical Functions', 'Glasgow Scale GCS', 'Glasgow Coma Scale E', 'Glasgow Coma Scale V', 'Glasgow Coma Scale M']
+	if Globals.patient.data[headers[190]] not in NA:
+		if Globals.patient.data[headers[190]] == 'Stupor':
+			_messages += [{"role": "system", "content": "You are in a state of stupor."}]
+		if Globals.patient.data[headers[190]] == 'Coma':
+			_messages += [{"role": "system", "content": "You are in a coma."}]
+		else:
+			_messages += [{"role": "system", "content": "You are %s." % [Globals.patient.data[headers[190]]]}]
+		if Globals.patient.data[headers[191]] not in NA:
+			_messages += [{"role": "system", "content": "Your state of consciousness can be also described with %s." % [Globals.patient.data[headers[191]]]}]
+	else:
+		if Globals.patient.data[headers[191]] not in NA:
+			_messages += [{"role": "system", "content": "Your state of consciousness can be described with %s." % [Globals.patient.data[headers[191]]]}]
+		else:
+			_messages += [{"role": "system", "content": "Your state of consciousness is unremarkable."}]
+	
+	if Globals.patient.data[headers[192]] not in NA:
+		_messages += [{"role": "system", "content": "Your attention span is %s." % [Globals.patient.data[headers[192]]]}]
+		if Globals.patient.data[headers[193]] not in NA:
+			_messages += [{"role": "system", "content": "Your attention span is also %s." % [Globals.patient.data[headers[193]]]}]
+	else:
+		if Globals.patient.data[headers[193]] not in NA:
+			_messages += [{"role": "system", "content": "Your attention span is %s." % [Globals.patient.data[headers[193]]]}]
+		else:
+			_messages += [{"role": "system", "content": "Your attention span is unremarkable."}]
+	
+	if Globals.patient.data[headers[194]] not in NA:
+		if Globals.patient.data[headers[194]] == 'Yes':
+			_messages += [{"role": "system", "content": "You are able to correctly acknowledge the current time."}]
+		if Globals.patient.data[headers[194]] == 'No':
+			_messages += [{"role": "system", "content": "You are unable to correctly acknowledge the current time."}]
+	else:
+		_messages += [{"role": "system", "content": "Your disorientation/orientation when it comes to time is unremarkable."}]
+	
+	if Globals.patient.data[headers[195]] not in NA:
+		if Globals.patient.data[headers[195]] == 'Yes':
+			_messages += [{"role": "system", "content": "You are able to correctly acknowledge the current place."}]
+		if Globals.patient.data[headers[195]] == 'No':
+			_messages += [{"role": "system", "content": "You are unable to correctly acknowledge the current place."}]
+	else:
+		_messages += [{"role": "system", "content": "Your disorientation/orientation when it comes to place is unremarkable."}]
+	
+	if Globals.patient.data[headers[196]] not in NA:
+		if Globals.patient.data[headers[196]] == 'Yes':
+			_messages += [{"role": "system", "content": "You are able to correctly acknowledge your identity."}]
+		if Globals.patient.data[headers[196]] == 'No':
+			_messages += [{"role": "system", "content": "You are unable to correctly acknowledge your identity."}]
+	else:
+		_messages += [{"role": "system", "content": "Your disorientation/orientation when it comes to your identity is unremarkable."}]
+	
+	if Globals.patient.data[headers[197]] not in NA:
+		_messages += [{"role": "system", "content": "Your memory is %s." % [Globals.patient.data[headers[197]]]}]
+		if Globals.patient.data[headers[198]] not in NA:
+			_messages += [{"role": "system", "content": "Your memory is also %s." % [Globals.patient.data[headers[198]]]}]
+	else:
+		if Globals.patient.data[headers[198]] not in NA:
+			_messages += [{"role": "system", "content": "Your memory is %s." % [Globals.patient.data[headers[198]]]}]
+		else:
+			_messages += [{"role": "system", "content": "Your memory is unremarkable."}]
+	
+	if Globals.patient.data[headers[199]] not in NA:
+		_messages += [{"role": "system", "content": "Your capability to perform calculations is %s." % [Globals.patient.data[headers[199]]]}]
+		if Globals.patient.data[headers[200]] not in NA:
+			_messages += [{"role": "system", "content": "Your capability to perform calculations is also %s." % [Globals.patient.data[headers[200]]]}]
+	else:
+		if Globals.patient.data[headers[200]] not in NA:
+			_messages += [{"role": "system", "content": "Your capability to perform calculations is %s." % [Globals.patient.data[headers[200]]]}]
+		else:
+			_messages += [{"role": "system", "content": "Your capability to perform calculations is unremarkable."}]
+	
+	if Globals.patient.data[headers[201]] not in NA:
+		if Globals.patient.data[headers[201]] == 'Intact':
+			_messages += [{"role": "system", "content": "You possess a satisfactory amount of general knowledge."}]
+		if Globals.patient.data[headers[201]] == 'Deficient':
+			_messages += [{"role": "system", "content": "Your general knowledge is deficient."}]
+		if Globals.patient.data[headers[202]] not in NA:
+			_messages += [{"role": "system", "content": "Your fund of information is also %s." % [Globals.patient.data[headers[202]]]}]
+	else:
+		if Globals.patient.data[headers[202]] not in NA:
+			_messages += [{"role": "system", "content": "Your fund of information is %s." % [Globals.patient.data[headers[202]]]}]
+		else:
+			_messages += [{"role": "system", "content": "Your fund of information is unremarkable."}]
+	
+	if Globals.patient.data[headers[203]] not in NA:
+		if Globals.patient.data[headers[203]] == 'Intact':
+			_messages += [{"role": "system", "content": "You possess a good level of insight."}]
+		if Globals.patient.data[headers[203]] == 'Deficient':
+			_messages += [{"role": "system", "content": "Your capacity for insight is deficient."}]
+		if Globals.patient.data[headers[204]] not in NA:
+			_messages += [{"role": "system", "content": "Your insight is also %s." % [Globals.patient.data[headers[204]]]}]
+	else:
+		if Globals.patient.data[headers[204]] not in NA:
+			_messages += [{"role": "system", "content": "Your insight is %s." % [Globals.patient.data[headers[204]]]}]
+		else:
+			_messages += [{"role": "system", "content": "Your insight is unremarkable."}]
+	
+	if Globals.patient.data[headers[205]] not in NA:
+		_messages += [{"role": "system", "content": "Your capacity for good judgment is %s." % [Globals.patient.data[headers[205]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your capacity for good judgment is unremarkable."}]
+	
+	if Globals.patient.data[headers[206]] not in NA:
+		if Globals.patient.data[headers[206]] == 'Intact':
+			_messages += [{"role": "system", "content": "You are capable of planning."}]
+		if Globals.patient.data[headers[206]] == 'Deficient':
+			_messages += [{"role": "system", "content": "You are incapable of planning."}]
+		if Globals.patient.data[headers[207]] not in NA:
+			_messages += [{"role": "system", "content": "Your capacity to plan is also %s." % [Globals.patient.data[headers[207]]]}]
+	else:
+		if Globals.patient.data[headers[207]] not in NA:
+			_messages += [{"role": "system", "content": "Your capacity to plan is %s." % [Globals.patient.data[headers[207]]]}]
+		else:
+			_messages += [{"role": "system", "content": "Your capacity to plan is unremarkable."}]
+	
+	if Globals.patient.data[headers[208]] not in NA:
+		var speech = Globals.patient.data[headers[208]]
+		if speech == 'Dysphasia':
+			_messages += [{"role": "system", "content": "You are unable to comprehend or formulate language."}]
+		if speech == 'Dysprosody':
+			_messages += [{"role": "system", "content": "You find it difficult to control the way you speak."}]
+		if speech == 'Dysarthria':
+			_messages += [{"role": "system", "content": "Your speech is slurred or slowed."}]
+		if speech == 'Dysphonia':
+			_messages += [{"role": "system", "content": "You have poor voice quality."}]
+		else:
+			_messages += [{"role": "system", "content": "Your speech quality is %s." % [Globals.patient.data[headers[208]]]}]
+		if Globals.patient.data[headers[209]] not in NA:
+			_messages += [{"role": "system", "content": "Your speech quality is also affected by %s." % [Globals.patient.data[headers[209]]]}]
+	else:
+		if Globals.patient.data[headers[209]] not in NA:
+			_messages += [{"role": "system", "content": "Your speech quality is affected by %s." % [Globals.patient.data[headers[209]]]}]
+		else:
+			_messages += [{"role": "system", "content": "Your speech quality is unremarkable."}]
+	
+	if Globals.patient.data[headers[210]] not in NA:
+		if Globals.patient.data[headers[210]] == 'Apraxia':
+			_messages += [{"role": "system", "content": "You are unable to perform certain actions."}]
+		if Globals.patient.data[headers[210]] == 'Agnosia':
+			_messages += [{"role": "system", "content": "You are incapable of identifying objects using one or more of your senses."}]
+	else:
+		_messages += [{"role": "system", "content": "Your high cortical functionals are unremarkable."}]
+	
+	if Globals.patient.data[headers[211]] not in NA:
+		_messages += [{"role": "system", "content": "Your total Glasgow Coma Score is %s." % [Globals.patient.data[headers[211]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know your Glasgow Coma Scale Score."}]
+	
+	if Globals.patient.data[headers[212]] not in NA:
+		var gcse = Globals.patient.data[headers[212]]
+		if gcse == '4':
+			_messages += [{"role": "system", "content": "You can open your eyes and keep them open on your own."}]
+		if gcse == '3':
+			_messages += [{"role": "system", "content": "You only open your eyes when someone tells you to do so."}]
+		if gcse == '2':
+			_messages += [{"role": "system", "content": "Your eyes only open in response to feeling pressure."}]
+		if gcse == '1':
+			_messages += [{"role": "system", "content": "Your eyes don’t open for any reason."}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know your Eye Response score for the Glasgow Coma Scale."}]
+	
+	if Globals.patient.data[headers[213]] not in NA:
+		var gcsv = Globals.patient.data[headers[213]]
+		if gcsv == '5':
+			_messages += [{"role": "system", "content": "You can correctly answer questions about who you are, where you’re at, the day or year, and similar questions."}]
+		if gcsv == '4':
+			_messages += [{"role": "system", "content": "You can answer questions, but your answers show you’re not fully aware of what’s happening."}]
+		if gcsv == '3':
+			_messages += [{"role": "system", "content": "You can talk and others can understand words you say, but your responses to questions don’t make sense."}]
+		if gcsv == '2':
+			_messages += [{"role": "system", "content": "You can’t talk and can only make sounds or noises."}]
+		if gcsv == '1':
+			_messages += [{"role": "system", "content": "You can't speak or make sounds."}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know your Verbal Response score for the Glasgow Coma Scale."}]
+	
+	if Globals.patient.data[headers[214]] not in NA:
+		var gcsm = Globals.patient.data[headers[214]]
+		if gcsm == '6':
+			_messages += [{"role": "system", "content": "You follow instructions on how and when to move."}]
+		if gcsm == '5':
+			_messages += [{"role": "system", "content": "You intentionally move away from something that presses on you."}]
+		if gcsm == '4':
+			_messages += [{"role": "system", "content": "You only move away from something pressing on you as a reflex."}]
+		if gcsm == '3':
+			_messages += [{"role": "system", "content": "You flex muscles (pull inward) in response to pressure."}]
+		if gcsm == '2':
+			_messages += [{"role": "system", "content": "You extend muscles (stretch outward) in response to pressure."}]
+		if gcsm == '1':
+			_messages += [{"role": "system", "content": "You don’t move in response to pressure."}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know your Motor Response score for the Glasgow Coma Scale."}]
+	
+	print("Meds:")
+	print(Globals.patient.medications)
+
+	# MEDICATIONS
+	if Globals.patient.medications:
+		for med in Globals.patient.medications:
+			var temp_med_str = "You are taking a" + ("n" if med[0][0].to_lower() in ['a', 'e', 'i', 'o', 'u'] else "") + " %s called %s with a dosage of %s via the %s route."
+			_messages += [{"role": "system", "content": temp_med_str % [med[0], med[1], med[2], med[3]]}]
+	else:
+		_messages += [{"role": "system", "content": "Your medication is unknown. You must say that you are not sure about the medication you've taken."}]
+
+
+# Prompts the patient AI using third person perspective
+func _load_third_person_context() -> void:
+	var headers = Globals.patient.data.keys()
+
+	# Add extra context if personality is set to Aggressive
+	var aggression = ""
+	if Globals.patient_personality == 2:
+		aggression = "This is a sensitive question and you must answer aggressively and defensively. You are an uncooperative and aggressive person that must answer questions very shortly and to the point but must be defensive when asked about sensitive topics. Add phrases like 'that's personal', or 'you're asking too many questions', or 'that's none of your business', or 'why are you even asking me that'. "
+	
+	# Pick a name from a list of names for the consultee
+	var NA = ["", "Not Applicable", "N/A", "NA", "not applicable"]
+	var f_names = ["Alex", "Bailey", "Casey", "Devin", "Emerson", "Finley", "Gray", "Hayden", "Indigo", "Jordan", "Kai", "Logan", "Morgan", "Nico", "Oakley", "Phoenix", "Quinn", "Reese", "Skyler", "Taylor", "Umi", "Vaughn", "Wren", "Xoan", "Yael", "Zephyr"]
+	var l_names = ["Anderson", "Bailey", "Carter", "Dawson", "Ellis", "Finch", "Garland", "Hayes", "Irwin", "Jensen", "Kennedy", "Lawson", "Monroe", "Nolan", "Oakley", "Parker", "Quinn", "Reed", "Sawyer", "Taylor", "Underwood", "Vega", "Wallace", "Xavier", "Young", "Zimmerman"]
+	
+	# BASIC INFO
+	var _name_first = f_names[(Globals.patient.data[headers[0]].unicode_at(0))-65]
+	var _name_last = l_names[(Globals.patient.data[headers[1]].unicode_at(0))-65]
+	var _doc_first = f_names[(Globals.patient.data[headers[2]].unicode_at(0))-65]
+	var _doc_last = l_names[(Globals.patient.data[headers[3]].unicode_at(0))-65]
+	
+	_messages += [
+		{"role": "system", "content": "You are visiting the doctor for a patient named %s %s. You are visiting for a consultation." % [_name_first, _name_last]}, # Globals.patient.info[0], Globals.patient.info[1]
+		{"role": "system", "content": "The patient's attending physician is %s %s." % [_doc_first, _doc_last]} # Globals.patient.info[2], Globals.patient.info[3]
+	]
+
+	# PESRONAL AND SOCIAL HISTORY
+	if Globals.patient.data[headers[5]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's birthday is %s (YYYY-MM-DD). You must answer in the format 'Month Day, Year'." % [Globals.patient.data[headers[5]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You must say that you do not want to share the patient's birth date."}]
+	
+	var _language_formatted
+	if Globals.allow_select_language:
+		_language_formatted = Globals.patient_language if Globals.patient_language == "English" else ("Filipino" if Globals.patient_language == "Tagalog" else ("either English or Filipino"))
+	else:
+		_language_formatted = Globals.patient.data[headers[22]] if Globals.patient.data[headers[22]] == "English" or Globals.patient.data[headers[22]] == "Filipino" else "either English or Filipino"
+	
+	for i in range(6, 25):
+		if headers[i] == "Language":
+			_messages += [{"role": "system", "content": "You must only use %s when communicating, use this language when communicating. When you are asked a question in a different language, you must act confused. When you are asked to speak in a different language than %s, you must deny the request. You should answer concisely, do not give out too much information in one response." % [_language_formatted, _language_formatted]}]
+		elif Globals.patient.data[headers[i]] not in NA:
+			_messages += [{"role": "system", "content": "%sYour %s is %s." % [aggression if headers[i] in ['Dwelling Type (House, Apt.)', 'Number Of Rooms', 'Appliances (Radio, Tv, Refrigerator) *Can Be Multiple', 'Annual Family Income'] else "", headers[i], Globals.patient.data[headers[i]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sYour %s is not known. You must say that you do not know %s." % [aggression if headers[i] in ['Dwelling Type (House, Apt.)', 'Number Of Rooms', 'Appliances (Radio, Tv, Refrigerator) *Can Be Multiple', 'Annual Family Income'] else "", headers[i], Globals.patient.data[headers[i]]]}]
+	
+	# PQRST PAIN ASSESSMENT
+	_messages += [
+		{"role": "system", "content": "The provocation of the patient's pain is %s." % [Globals.patient.data[headers[28]]]},
+		{"role": "system", "content": "The quality of the patient's pain is %s." % [Globals.patient.data[headers[29]]]},
+		{"role": "system", "content": "The region of the patient's pain is %s." % [Globals.patient.data[headers[30]]]},
+		{"role": "system", "content": "The severity of the patient's pain is %s/10." % [Globals.patient.data[headers[31]]]},
+		{"role": "system", "content": "The timing of the patient's pain is %s." % [Globals.patient.data[headers[32]]]}
+	]
+
+	# HISTORY
+	_messages += [
+		{"role": "system", "content": "The patient's most important complaint and reason for consulting is %s." % [Globals.patient.data[headers[25]]]},
+		{"role": "system", "content": "The patient's main concerns about the problem is/are %s." % [Globals.patient.data[headers[26]]]}
+	]
+
+	if Globals.patient.history:
+		for hist in Globals.patient.history:
+			if hist[0] not in NA and hist[1] not in NA:
+				_messages += [{"role": "system", "content": "The patient's history of present illness includes: %s with dosage of %s." % [hist[0], hist[1]]}]
+			if hist[0] not in NA and hist[1] in NA:
+				_messages += [{"role": "system", "content": "The patient's history of present illness includes: %s." % [hist[0]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's history of present illness is not known. You must say that you do not know the patient's history of present illness."}]
+	
+	# CONTEXT: STAKEHOLDER ANALYSIS
+	if Globals.patient.data[headers[33]] not in NA:
+		_messages += [{"role": "system", "content": "%s is a decision maker for the patient's medicinal treatment." % [Globals.patient.data[headers[33]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You are not sure about the patient's stakeholders. You must say that you do not know about the patient's treatment's stakeholders."}]
+	if Globals.patient.data[headers[34]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's stakeholder is a %s for the patient's medicinal treatment." % [Globals.patient.data[headers[34]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know about the patient's stakeholder's interest in the patient's issue. You must say that you do not know how important the patient's stakeholder is in deciding the patient's treatment."}]
+	if Globals.patient.data[headers[35]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's stakeholder's role is %s." % [Globals.patient.data[headers[35]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You are not sure about the patient's stakeholder's role. You must say that you do not know about the patient's stakeholder's role."}]
+	if Globals.patient.data[headers[36]] not in NA:
+		_messages += [{"role": "system", "content": "The influence of the patient's stakeholder's opinion on the patient's treatment planning is %s." % [Globals.patient.data[headers[36]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You are not aware of the patient's stakeholder's level of influence over the patient's treatment planning. You must say that you do not know how much the patient's stakeholder's opinions affect the patient's treatment planning."}]
+	
+	# CONTEXT: COMMUNITY FACTORS
+	if Globals.patient.data[headers[37]] not in NA:
+		_messages += [{"role": "system", "content": "The patient has pertinent belief/s, such as %s." % [Globals.patient.data[headers[37]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient does not have any pertinent beliefs. You must say that you do not want to talk about the patient's beliefs."}]
+	if Globals.patient.data[headers[38]] not in NA:
+		_messages += [{"role": "system", "content": "%sThis will have a %s impact on the patient's family." % [aggression, Globals.patient.data[headers[38]]]}]
+	else:
+		_messages += [{"role": "system", "content": "%sYou do not know about community factors that influence the patient's family. You must say that you do not know of any community factors that influence the patient's family." % [aggression]}]
+	if Globals.patient.data[headers[39]] not in NA:
+		_messages += [{"role": "system", "content": "Factors in the community like %s facilitate and help the patient." % [Globals.patient.data[headers[39]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You are not aware of any factors in the community that facilitate and help the patient. You must say that you do not know of any community factors that help the patient."}]
+	if Globals.patient.data[headers[40]] not in NA:
+		_messages += [{"role": "system", "content": "Factors in the community like %s hinder the patient." % [Globals.patient.data[headers[40]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You are not aware of any factors in the community that hinder the patient. You must say that you do not know of any community factors that hinder the patient."}]
+	if Globals.patient.data[headers[41]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's illness gives them burdens like %s." % [Globals.patient.data[headers[41]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You are not aware of any burdens that the patient's illness gives them. You must say that you do not know if the patient's illness gives them burdens."}]
+	if Globals.patient.data[headers[42]] not in NA:
+		_messages += [{"role": "system", "content": "%s are pertinent legislations or policies that affect the patient." % [Globals.patient.data[headers[42]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You are not aware of any pertinent legislation or policies. You must say that you do not know anything about relevant legislation or policies."}]
+	
+	# NUTRITIONAL HISTORY
+	if Globals.patient.data[headers[43]] not in NA:
+		_messages += [{"role": "system", "content": "The patient was breastfed until %s." % [Globals.patient.data[headers[43]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know how long the patient was breastfed. You must say that you do not know how long the patient was breastfed."}]
+	if Globals.patient.data[headers[44]] not in NA:
+		_messages += [{"role": "system", "content": "The patient was given %s formula as a baby." % [Globals.patient.data[headers[44]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know about the patient's consumption of formula as a baby. You must say that you don't remember anything about the patient consuming formula as a baby."}]
+	if Globals.patient.data[headers[45]] not in NA:
+		_messages += [{"role": "system", "content": "The patient was weaned at %s." % [Globals.patient.data[headers[45]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's weaning age is unknown. You must say that you do not know when the patient transitioned from breast milk to food."}]
+	if Globals.patient.data[headers[46]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's current diet is %s." % [Globals.patient.data[headers[46]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You must say that you are not sure about the patient's current diet."}]
+	if Globals.patient.data[headers[47]] not in NA:
+		_messages += [{"role": "system", "content": "The patient has food allergy/ies is/are %s." % [Globals.patient.data[headers[47]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's food allergies are unknown. You must say that you do not know if the patient has any food allergies."}]
+
+	# BIRTH MATERNAL
+	if Globals.patient.data[headers[48]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's mother's pregnancy was %s." % [Globals.patient.data[headers[48]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know anything about the patient's mother's term. You must say you do not know how many weeks the patient's mother carried the patient."}]
+	if Globals.patient.data[headers[49]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's mother gave birth to the patient via %s." % [Globals.patient.data[headers[49]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know how the patient was delivered. You must say you do not know how the patient was born."}]
+	if Globals.patient.data[headers[50]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's mother was %s years old when she gave birth to the patient." % [Globals.patient.data[headers[50]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You must say that you do not know how old the patient's mother was when she gave birth to the patient."}]
+	if Globals.patient.data[headers[51]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's mother has been pregnant %s times. The patient's mother's gravidity is %s" % [Globals.patient.data[headers[51]], Globals.patient.data[headers[51]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know how many times the patient's mother has been pregnant."}]
+	if Globals.patient.data[headers[52]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's mother has carried a pregnancy to at least 20 weeks %s times." % [Globals.patient.data[headers[52]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know how many times the patient's mother has carried a pregnancy to at least 20 weeks."}]
+	if Globals.patient.data[headers[53]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's birth weight is %s grams." % [Globals.patient.data[headers[53]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's birth weight is unknown. You must say that you do not know how heavy the patient was when they were born."}]
+	if Globals.patient.data[headers[54]] not in NA and Globals.patient.data[headers[55]] not in NA:
+		_messages += [{"role": "system", "content": "The doctor that attended to the patient's mother during giving birth is %s %s." % [Globals.patient.data[headers[54]], Globals.patient.data[headers[55]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's mother's attending doctor during childbirth is unknown."}]
+	if Globals.patient.data[headers[56]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's mother's perinatal cervix is %s." % [Globals.patient.data[headers[56]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know anything about the patient's mother's perinatal cervix when the patient was born."}]
+	
+	# DEVELOPMENT MILESTONES
+	for i in range(57, 61):
+		if Globals.patient.data[headers[i]] not in NA:
+			_messages += [{"role": "system", "content": "The patient's %s developmental milestones are %s." % [headers[i], Globals.patient.data[headers[i]]]}]
+		else:
+			_messages += [{"role": "system", "content": "The patient's %s development milestone is unknown. You must say that you do not know about the patient's %s development." % [headers[i], Globals.patient.data[headers[i]]]}]
+
+	# REVIEW OF SYSTEMS: GENERAL SYMPTOMS
+	for i in range(61, 66):
+		if Globals.patient.data[headers[i]] == 'Yes':
+			_messages += [{"role": "system", "content": "The patient has %s." % [headers[i]]}]
+		else:
+			_messages += [{"role": "system", "content": "The patient doesn't have %s." % [headers[i]]}]
+	
+	if Globals.patient.data[headers[66]] not in NA:
+		_messages += [{"role": "system", "content": "The patient has %s." % [Globals.patient.data[headers[66]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's other general symptoms are unknown. You must say that the patient does not have any other general symptoms."}]
+	
+	# REVIEW OF SYMPTOMS: MUSCULOSKELETAL OR DERMATOLOGIC
+	for i in range(67, 77):
+		if Globals.patient.data[headers[i]] == 'Yes':
+			_messages += [{"role": "system", "content": "The patient has %s." % [headers[i]]}]
+		else:
+			_messages += [{"role": "system", "content": "The patient doesn't have %s." % [headers[i]]}]
+	
+	if Globals.patient.data[headers[77]] not in NA:
+		_messages += [{"role": "system", "content": "The patient has %s." % [Globals.patient.data[headers[77]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's other musculoskeletal or dermatologic symptoms are unknown. You must say that the patient does not have any other symptoms that affect their muscles, bones, or skin."}]
+	
+	# GENERAL SYMPTOMS: HEENT
+	for i in range(78, 89):
+		if Globals.patient.data[headers[i]] == 'Yes':
+			_messages += [{"role": "system", "content": "The patient has %s." % [headers[i]]}]
+		else:
+			_messages += [{"role": "system", "content": "The patient doesn't have %s." % [headers[i]]}]
+	
+	if Globals.patient.data[headers[89]] not in NA:
+		_messages += [{"role": "system", "content": "The patient has %s." % [Globals.patient.data[headers[89]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's other HEENT symptoms are unknown. You must say that the patient does not have any other symptoms concerning their head, eyes, ears, nose, or throat."}]
+
+	if Globals.patient.data[headers[90]] == 'Yes':
+		_messages += [{"role": "system", "content": "The patient has shortness of breath"}]
+	else:
+		_messages += [{"role": "system", "content": "The patient doesn't have shortness of breath."}]
+	if Globals.patient.data[headers[91]] == 'Yes':
+		_messages += [{"role": "system", "content": "The patient coughs up blood"}]
+	else:
+		_messages += [{"role": "system", "content": "The patient doesn't cough up blood."}]
+
+	for i in range(92, 94):
+		if Globals.patient.data[headers[i]] == 'Yes':
+			_messages += [{"role": "system", "content": "The patient has %s." % [headers[i]]}]
+		else:
+			_messages += [{"role": "system", "content": "The patient doesn't have %s." % [headers[i]]}]
+	
+	if Globals.patient.data[headers[94]] not in NA:
+		_messages += [{"role": "system", "content": "The patient has %s." % [Globals.patient.data[headers[94]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's other respiratory symptoms are unknown. You must say that the patient does not have any other symptoms that affect their breathing."}]
+	
+	# GENERAL SYMPTOMS: CARDIOVASCULAR
+	for i in range(95, 97):
+		if Globals.patient.data[headers[i]] == 'Yes':
+			_messages += [{"role": "system", "content": "The patient has %s." % [headers[i]]}]
+		else:
+			_messages += [{"role": "system", "content": "The patient doesn't have %s." % [headers[i]]}]
+	
+	if Globals.patient.data[headers[97]] not in NA:
+		_messages += [{"role": "system", "content": "The patient faints."}]
+	else:
+		_messages += [{"role": "system", "content": "The patient doesn't faint."}]
+	if Globals.patient.data[headers[98]] not in NA:
+		_messages += [{"role": "system", "content": "The patient has shortness of breath while lying on their back."}]
+	else:
+		_messages += [{"role": "system", "content": "The patient doesn't have shortness of breath when lying on their back."}]
+
+	if Globals.patient.data[headers[99]] not in NA:
+		_messages += [{"role": "system", "content": "The patient has %s." % [Globals.patient.data[headers[99]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's other cardiovascular symptoms are unknown. You must say that the patient does not have any other symptoms that affect their heart or blood."}]
+	
+	# GENERAL SYMPTOMS: GASTROINTESTINAL
+	for i in range(100, 107):
+		if headers[i] == 'Dysphagia':
+			if Globals.patient.data[headers[i]] == 'Yes':
+				_messages += [{"role": "system", "content": "The patient has difficulty swallowing."}]
+			else:
+				_messages += [{"role": "system", "content": "The patient doesn't have difficulty swallowing."}]
+		else:
+			if Globals.patient.data[headers[i]] == 'Yes':
+				_messages += [{"role": "system", "content": "The patient has %s." % [headers[i]]}]
+			else:
+				_messages += [{"role": "system", "content": "The patient doesn't have %s." % [headers[i]]}]
+	
+	if Globals.patient.data[headers[107]] not in NA:
+		_messages += [{"role": "system", "content": "The patient has %s." % [Globals.patient.data[headers[107]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's other gastrointestinal symptoms are unknown. You must say that the patient does not have any other symptoms that affect their digestion."}]
+	
+	# GENERAL SYMPTOMS: GENITOURINARY
+	if Globals.patient.data[headers[108]] == 'Yes':
+		_messages += [{"role": "system", "content": "The patient pees a lot during the night"}]
+	else:
+		_messages += [{"role": "system", "content": "The patient doesn't pee a lot during the night ."}]
+	if Globals.patient.data[headers[109]] == 'Yes':
+		_messages += [{"role": "system", "content": "The patient has pain when they pee."}]
+	else:
+		_messages += [{"role": "system", "content": "The patient doesn't have pain when they pee."}]
+	if Globals.patient.data[headers[110]] == 'Yes':
+		_messages += [{"role": "system", "content": "The patient pees more often than average"}]
+	else:
+		_messages += [{"role": "system", "content": "The patient doesn't pee more often than average ."}]
+	if Globals.patient.data[headers[111]] == 'Yes':
+		_messages += [{"role": "system", "content": "The patient has blood in their urine"}]
+	else:
+		_messages += [{"role": "system", "content": "The patient doesn't have blood in their urine."}]
+	
+	if Globals.patient.data[headers[112]] not in NA:
+		_messages += [{"role": "system", "content": "The patient has %s." % [Globals.patient.data[headers[112]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's other genitourinary symptoms are unknown. You must say that the patient does not have any other symptoms that affect their urine or their reproductive system."}]
+	
+	# GENERAL SYMPTOMS: ENDOCRINE
+	for i in range(113, 118):
+		if headers[i] == "Polyuria":
+			if Globals.patient.data[headers[i]] == 'Yes':
+				_messages += [{"role": "system", "content": "The patient pees more than the average amount"}]
+			else:
+				_messages += [{"role": "system", "content": "The patient doesn't pee more than the average amount ."}]
+		else:
+			if Globals.patient.data[headers[i]] == 'Yes':
+				_messages += [{"role": "system", "content": "The patient has %s." % [Globals.patient.data[headers[i]]]}]
+			else:
+				_messages += [{"role": "system", "content": "The patient doesn't have %s." % [headers[i]]}]
+	
+	if Globals.patient.data[headers[118]] not in NA:
+		_messages += [{"role": "system", "content": "The patient has %s." % [Globals.patient.data[headers[118]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's other endocrine symptoms are unknown. You must say that you do not know any other symptoms that affect the patient's hormones."}]
+	
+	# PAST MEDICAL HISTORY
+	for i in range(119, 127):
+		if Globals.patient.data[headers[i]] == 'Yes':
+			_messages += [{"role": "system", "content": "%sThe patient has %s." % [aggression if headers[i] in ['History of Diabetes', 'History of Psychiatric Consult', 'History of Cancer', 'Prior Surgeries/Hospitalizations'] else "", Globals.patient.data[headers[i]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sThe patient doesn't have %s." % [aggression if headers[i] in ['History of Diabetes', 'History of Psychiatric Consult', 'History of Cancer', 'Prior Surgeries/Hospitalizations'] else "", headers[i]]}]
+	
+	if Globals.patient.data[headers[131]] not in NA:
+		_messages += [{"role": "system", "content": "The patient has %s." % [Globals.patient.data[headers[131]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's other past medical history is unknown. You must say that you are not sure about the patient's past medical history."}]
+	if Globals.patient.data[headers[127]] not in NA:
+		_messages += [{"role": "system", "content": "The patient had cancer before at %s." % [Globals.patient.data[headers[127]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's previous cancer sites are unknown. You must say that you are not sure about previous cancer sites."}]
+	if Globals.patient.data[headers[128]] not in NA:
+		_messages += [{"role": "system", "content": "The patient had prior surgeries or hospitalization dates on %s." % [Globals.patient.data[headers[128]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's prior surgeries or hospitalization dates are unknown. You must say that you do not remember the patient's prior surgeries or hospitalization dates."}]
+	if Globals.patient.data[headers[129]] not in NA:
+		_messages += [{"role": "system", "content": "%sThe patient has had prior surgeries or hospitalization because of %s." % [aggression, Globals.patient.data[headers[129]]]}]
+	else:
+		_messages += [{"role": "system", "content": "%sThe patient's prior surgeries or hospitalization reasons are unknown. You must say that you do not remember the reasons for the patient's prior surgeries or hospitalizations." % [aggression]}]
+	if Globals.patient.data[headers[130]] not in NA:
+		_messages += [{"role": "system", "content": "The patient had history of allergies with %s." % [Globals.patient.data[headers[130]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's history of allergies is unknown. You must say that you do not know about the patient's history of allergies."}]
+	
+	# FAMILY MEDICAL HISTORY
+	for i in range(132, 139):
+		if Globals.patient.data[headers[i]] == 'Yes':
+			_messages += [{"role": "system", "content": "%sThe patient has %s." % [aggression if headers[i] in ['Family History of Psychiatric Consult', 'Family History of Diabetes', 'Family History of Cardiovascular Disease', 'Family History of Cancer'] else "", headers[i]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sThe patient doesn't have %s." % [aggression if headers[i] in ['Family History of Psychiatric Consult', 'Family History of Diabetes', 'Family History of Cardiovascular Disease', 'Family History of Cancer'] else "", headers[i]]}]
+	
+	if Globals.patient.data[headers[140]] not in NA:
+		if Globals.patient.data[headers[139]] not in NA:
+			_messages += [{"role": "system", "content": "The patient's %s has had cancer before at %s." % [Globals.patient.data[headers[140]], Globals.patient.data[headers[139]]]}]
+		else:
+			_messages += [{"role": "system", "content": "The patient's %s has had cancer before." % [Globals.patient.data[headers[140]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's relationship to any cancer patient is unknown. You must say that you do not know if any of the patient's relatives have cancer or have had cancer."}]
+	if Globals.patient.data[headers[141]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's family has had history of allergies with %s." % [Globals.patient.data[headers[141]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's family's history of allergies is unknown. You must say that you do not know about the patient's family's history of allergies."}]
+	if Globals.patient.data[headers[142]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's other family history is %s." % [Globals.patient.data[headers[142]]]}]
+	else:
+		_messages += [{"role": "system", "content": "Other details about the patient's family history are unknown. You must say that you do not know about any other details about the patient's family history."}]
+	if Globals.patient.data[headers[143]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's genogram can be described as %s." % [Globals.patient.data[headers[143]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's genogram is unknown. You must say that you do not know about the patient's family genogram."}]
+	if Globals.patient.data[headers[144]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's social and environmental history can be described as %s." % [Globals.patient.data[headers[144]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's social and environmental history is unknown. You must say that you do not remember the patient's social and environmental history."}]
+
+	# GYNECOLOGIC HISTORY
+	if Globals.patient.data[headers[7]] == 'Female' and Globals.patient.data[headers[150]] not in NA:
+		if Globals.patient.data[headers[145]] not in NA:
+			_messages += [{"role": "system", "content": "%sThe start of the patient's last period or the first day of bleeding is %s." % [aggression, Globals.patient.data[headers[145]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sThe start of the patient's last period or the first day of bleeding is unknown. You must say that you do not remember the start of the patient's last period or the first day of bleeding." % [aggression]}]
+		if Globals.patient.data[headers[146]] not in NA:
+			_messages += [{"role": "system", "content": "%sThe starting date of the patient's period before their last is %s." % [aggression, Globals.patient.data[headers[146]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sThe starting date of the patient's period before their last is unknown. You must say that you do not remember the starting date of the patient's period before their last." % [aggression]}]
+		if Globals.patient.data[headers[147]] not in NA:
+			_messages += [{"role": "system", "content": "%sThe duration of the patient's period bleeding is %s." % [aggression, Globals.patient.data[headers[147]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sThe duration of the patient's period bleeding is unknown. You must say that you are not sure about how long the patient's period bleeding lasts." % [aggression]}]
+		if Globals.patient.data[headers[148]] not in NA:
+			_messages += [{"role": "system", "content": "%sThe interval of the patient's period cycles or how long each cycle takes is %s." % [aggression, Globals.patient.data[headers[148]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sThe interval of the patient's period cycles or how long each cycle takes is unknown. You must say that you are not sure about how long each cycle takes." % [aggression]}]
+		if Globals.patient.data[headers[149]] not in NA:
+			_messages += [{"role": "system", "content": "%sThe patient bleeds %s mL during their period or menses." % [aggression, Globals.patient.data[headers[149]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sThe amount the patient bleeds during their period or menses is unknown. You must say that you are not sure about how much blood the patient expels during their period." % [aggression]}]
+		if Globals.patient.data[headers[150]] not in NA:
+			_messages += [{"role": "system", "content": "%sThe patient was %s years old when they got their first period." % [aggression, Globals.patient.data[headers[150]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sThe patient's menarche or age when they got their first period is unknown. You must say that you do not know when the patient had their first period." % [aggression]}]
+		if Globals.patient.data[headers[151]] not in NA:
+			_messages += [{"role": "system", "content": "%sThe patient was %s years old during their first sexual intercourse." % [aggression, Globals.patient.data[headers[151]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sThe patient's coitarche or age during their first sexual intercourse is unknown. You must say that you are unsure about the first time the patient had sex." % [aggression]}]
+
+	# IMMUNIZATIONS
+	for i in range(152, 161):
+		if Globals.patient.data[headers[i]] == 'Complete' or Globals.patient.data[headers[i]] == 'Incomplete':
+			_messages += [{"role": "system", "content": "The patient has completed the doses for %s %s." % [Globals.patient.data[headers[i]], headers[i]]}]
+		elif Globals.patient.data[headers[i]] == 'None':
+			_messages += [{"role": "system", "content": "The patient doesn't have %s." % [headers[i]]}]
+		else:
+			_messages += [{"role": "system", "content": "The patient is unsure about having %s. You must say that you do not know if the patient has %s." % [headers[i], headers[i]]}]
+	
+	# IMMUNIZATION DOSES
+	for i in range(161, 170):
+		if Globals.patient.data[headers[i]] not in NA:
+			_messages += [{"role": "system", "content": "The patient has had %s doses for %s." % [Globals.patient.data[headers[i]], headers[i]]}]
+		else:
+			_messages += [{"role": "system", "content": "The patient's doses for %s is unknown. You must say that you do not know how many %s the patient has had.." % [headers[i], headers[i]]}]
+	
+	if Globals.patient.immunizations:
+		for immune in Globals.patient.immunizations:
+			_messages += [{"role": "system", "content": "The patient has %s doses of %s immunization." % [immune[1], immune[0]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's other immunizations are unknown. You must say that you are not sure about the patient's other immunizations."}]
+	
+	# ADOLESCENT INTERVIEW
+	if 10 <= int(Globals.patient.data[headers[6]]) and int(Globals.patient.data[headers[6]]) <= 19:
+		if Globals.patient.data[headers[171]] not in NA:
+			_messages += [{"role": "system", "content": "%sWhen asked about the patient's home, answer with %s." % [aggression, Globals.patient.data[headers[171]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sInformation about the patient's home is unknown. You must say that you do not want to talk about the patient's home." % [aggression]}]
+		if Globals.patient.data[headers[172]] not in NA:
+			_messages += [{"role": "system", "content": "%sWhen asked about the patient's education, answer with %s." % [aggression, Globals.patient.data[headers[172]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sInformation about the patient's education is unknown. You must say that you do not want to talk about the patient's education." % [aggression]}]
+		if Globals.patient.data[headers[173]] not in NA:
+			_messages += [{"role": "system", "content": "When asked about the patient's activities, answer with %s." % [Globals.patient.data[headers[173]]]}]
+		else:
+			_messages += [{"role": "system", "content": "Information about the patient's activities is unknown. You must say that you do not want to talk about what the patient does."}]
+		if Globals.patient.data[headers[174]] not in NA:
+			_messages += [{"role": "system", "content": "%sWhen asked about drugs the patient has taken, answer with %s." % [aggression, Globals.patient.data[headers[174]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sInformation about drugs the patient has taken is unknown. You must say that you do not want to talk about drugs." % [aggression]}]
+		if Globals.patient.data[headers[175]] not in NA:
+			_messages += [{"role": "system", "content": "%sWhen asked if the patient has had any kind of sexual activity or anything about it, answer with %s." % [aggression, Globals.patient.data[headers[175]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sInformation about if the patient had any kind of sexual activity or anything about it is unknown. You must say that you do not want to talk about the patient's sex life." % [aggression]}]
+		if Globals.patient.data[headers[176]] not in NA:
+			_messages += [{"role": "system", "content": "%sWhen asked about the patient's history with suicide/depression, answer with %s." % [aggression, Globals.patient.data[headers[176]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sInformation about the patient's history with suicide/depression is unknown. You must say that you do not want to talk about the patient's suicide or depression." % [aggression]}]
+		if Globals.patient.data[headers[177]] not in NA:
+			_messages += [{"role": "system", "content": "When asked about the patient's family, answer with %s." % [Globals.patient.data[headers[177]]]}]
+		else:
+			_messages += [{"role": "system", "content": "Information about the patient's family is unknown. You must say that you do not want to talk about the patient's family."}]
+		if Globals.patient.data[headers[178]] not in NA:
+			_messages += [{"role": "system", "content": "%sWhen asked about the patient's source of income and dynamics, answer with %s." % [aggression, Globals.patient.data[headers[178]]]}]
+		else:
+			_messages += [{"role": "system", "content": "%sInformation about the patient's source of income and dynamics is unknown. You must say that you do not want to talk about the patient's source of income and dynamics." % [aggression]}]
+
+	# NEUROPSYCHIATRIC EXAM
+	# ['General Appearance', 'General Behavior', 'Attitude Towards Examiner', 'Mood', 'Affect', 'Speech', 'Perceptual Disturbance', 'Stream of Thought', 'Thought Content', 'Impulse Control', 'Intellectual Capacity Global Estimate']
+	if Globals.patient.data[headers[179]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's general appearance is that they are %s." % [Globals.patient.data[headers[179]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's general appearance is unremarkable."}]
+		
+	if Globals.patient.data[headers[180]] not in NA:
+		if Globals.patient.data[headers[180]] == 'Normal':
+			_messages += [{"role": "system", "content": "The patient's general behavior is normal."}]
+		else:
+			_messages += [{"role": "system", "content": "The patient is experiencing %s" % [Globals.patient.data[headers[180]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's general behavior is unremarkable."}]
+	
+	if Globals.patient.data[headers[181]] not in NA:
+		_messages += [{"role": "system", "content": "The patient is %s towards the examiner." % [Globals.patient.data[headers[181]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's attitude towards the examiner is unremarkable."}]
+	
+	if Globals.patient.data[headers[182]] not in NA:
+		_messages += [{"role": "system", "content": "The patient is feeling %s" % [Globals.patient.data[headers[182]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's mood is unremarkable."}]
+	
+	if Globals.patient.data[headers[183]] not in NA:
+		var affect = Globals.patient.data[headers[183]]
+		if affect == 'Inappropriate':
+			_messages += [{"role": "system", "content": "The patient is demonstrating emotions that do not fit the context."}]
+		elif affect == 'Appropriate':
+			_messages += [{"role": "system", "content": "The patient is demonstrating emotions that fit the context."}]
+		elif affect == 'Restricted':
+			_messages += [{"role": "system", "content": "The patient is demonstrating a narrow range of emotions."}]
+		elif affect == 'Blunted':
+			_messages += [{"role": "system", "content": "The patient is demonstrating a limited intensity of emotions."}]
+		elif affect == 'Flat':
+			_messages += [{"role": "system", "content": "The patient is not demonstrating any emotions."}]
+		elif affect == 'Broad':
+			_messages += [{"role": "system", "content": "The patient is able to demonstrate a broad range of emotions."}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's affect is unremarkable."}]
+	
+	if Globals.patient.data[headers[184]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's speech is %s." % [Globals.patient.data[headers[184]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's speech is unremarkable."}]
+	
+	if Globals.patient.data[headers[185]] not in NA:
+		var perceptualDisturbance = Globals.patient.data[headers[185]]
+		if perceptualDisturbance == 'Derealization':
+			_messages += [{"role": "system", "content": "The patient feels detached from their surroundings."}]
+		elif perceptualDisturbance == 'Depersonalization':
+			_messages += [{"role": "system", "content": "The patient feels detached and disconnected from their self."}]
+		elif perceptualDisturbance == 'Hallucinations':
+			_messages += [{"role": "system", "content": "The patient is having hallucinations."}]
+		elif perceptualDisturbance == 'None':
+			_messages += [{"role": "system", "content": "The patient is not experiencing any perceptual disturbances."}]
+	else:
+		_messages += [{"role": "system", "content": "The patient doesn't remember any perceptual disturbances."}]
+	
+	if Globals.patient.data[headers[186]] not in NA:
+		var stream_str = Globals.patient.data[headers[186]]
+		if stream_str == 'Tangentiality':
+			_messages += [{"role": "system", "content": "The patient's ideas are connected but they tend to go far off-topic without returning to the initial topic."}]
+		if stream_str == 'Paucity of Thought':
+			_messages += [{"role": "system", "content": "The patient is experiencing a paucity of thoughts."}]
+		if stream_str == 'Flight of Ideas':
+			_messages += [{"role": "system", "content": "The patient talks quickly and erratically, jumping between ideas and thoughts."}]
+		if stream_str == 'Looseness of Association':
+			_messages += [{"role": "system", "content": "The patient's ideas lack connection."}]
+		if stream_str == 'Goal Oriented':
+			_messages += [{"role": "system", "content": "The patient's thoughts progress linearly without veering from the subject at hand."}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's stream of thought is unremarkable."}]
+	
+	if Globals.patient.data[headers[187]] not in NA:
+		var thought = Globals.patient.data[headers[187]]
+		if thought == 'Suicidal':
+			_messages += [{"role": "system", "content": "The patient is experiencing suicidal thoughts."}]
+		if thought == 'Bizzare':
+			_messages += [{"role": "system", "content": "The patient's thoughts can be described as bizarre."}]
+		if thought == 'Homicidal/Aggression':
+			_messages += [{"role": "system", "content": "The patient has homicidal thoughts and is prone to aggression."}]
+		if thought == 'Grandiosity':
+			_messages += [{"role": "system", "content": "The patient feels superior to others."}]
+		if thought == 'Paranoia':
+			_messages += [{"role": "system", "content": "The patient is overly suspicious and is prone to thinking that others are out to harm them."}]
+		if thought == 'Normal':
+			_messages += [{"role": "system", "content": "The patient's thoughts are normal."}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's thoughts are unremarkable."}]
+	
+	if Globals.patient.data[headers[188]] not in NA:
+		_messages += [{"role": "system", "content": "The patient is %s their impulses." % [Globals.patient.data[headers[188]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's impulse control is unremarkable."}]
+	
+	if Globals.patient.data[headers[189]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's intellectual capacity is %s." % [Globals.patient.data[headers[189]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient does not know how smart they are on average."}]
+
+	# NEUROPSYCHIATRIC EXAM: SENSORIUM
+	# ['Consciousness', 'Other State of Consciousness', 'Attention Span', 'Attention Span Notes', 'Orientation Time', 'Orientation Place', 'Orientation Person', 'Memory', 'Memory Notes', 'Calculation', 'Calculation Notes', 'Fund of Information', 'Fund of Information Notes', 'Insight', 'Insight Notes', 'Judgment', 'Planning', 'Planning Notes', 'Speech Others', 'Other High Cortical Functions', 'Glasgow Scale GCS', 'Glasgow Coma Scale E', 'Glasgow Coma Scale V', 'Glasgow Coma Scale M']
+	if Globals.patient.data[headers[190]] not in NA:
+		if Globals.patient.data[headers[190]] == 'Stupor':
+			_messages += [{"role": "system", "content": "The patient is in a state of stupor."}]
+		if Globals.patient.data[headers[190]] == 'Coma':
+			_messages += [{"role": "system", "content": "The patient is in a coma."}]
+		else:
+			_messages += [{"role": "system", "content": "The patient is %s." % [Globals.patient.data[headers[190]]]}]
+		if Globals.patient.data[headers[191]] not in NA:
+			_messages += [{"role": "system", "content": "The patient's state of consciousness can be also described with %s." % [Globals.patient.data[headers[191]]]}]
+	else:
+		if Globals.patient.data[headers[191]] not in NA:
+			_messages += [{"role": "system", "content": "The patient's state of consciousness can be described with %s." % [Globals.patient.data[headers[191]]]}]
+		else:
+			_messages += [{"role": "system", "content": "The patient's state of consciousness is unremarkable."}]
+	
+	if Globals.patient.data[headers[192]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's attention span is %s." % [Globals.patient.data[headers[192]]]}]
+		if Globals.patient.data[headers[193]] not in NA:
+			_messages += [{"role": "system", "content": "The patient's attention span is also %s." % [Globals.patient.data[headers[193]]]}]
+	else:
+		if Globals.patient.data[headers[193]] not in NA:
+			_messages += [{"role": "system", "content": "The patient's attention span is %s." % [Globals.patient.data[headers[193]]]}]
+		else:
+			_messages += [{"role": "system", "content": "The patient's attention span is unremarkable."}]
+	
+	if Globals.patient.data[headers[194]] not in NA:
+		if Globals.patient.data[headers[194]] == 'Yes':
+			_messages += [{"role": "system", "content": "The patient is able to correctly acknowledge the current time."}]
+		if Globals.patient.data[headers[194]] == 'No':
+			_messages += [{"role": "system", "content": "The patient is unable to correctly acknowledge the current time."}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's disorientation/orientation when it comes to time is unremarkable."}]
+	
+	if Globals.patient.data[headers[195]] not in NA:
+		if Globals.patient.data[headers[195]] == 'Yes':
+			_messages += [{"role": "system", "content": "The patient is able to correctly acknowledge the current place."}]
+		if Globals.patient.data[headers[195]] == 'No':
+			_messages += [{"role": "system", "content": "The patient is unable to correctly acknowledge the current place."}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's disorientation/orientation when it comes to place is unremarkable."}]
+	
+	if Globals.patient.data[headers[196]] not in NA:
+		if Globals.patient.data[headers[196]] == 'Yes':
+			_messages += [{"role": "system", "content": "The patient is able to correctly acknowledge their identity."}]
+		if Globals.patient.data[headers[196]] == 'No':
+			_messages += [{"role": "system", "content": "The patient is unable to correctly acknowledge their identity."}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's disorientation/orientation when it comes to their identity is unremarkable."}]
+	
+	if Globals.patient.data[headers[197]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's memory is %s." % [Globals.patient.data[headers[197]]]}]
+		if Globals.patient.data[headers[198]] not in NA:
+			_messages += [{"role": "system", "content": "The patient's memory is also %s." % [Globals.patient.data[headers[198]]]}]
+	else:
+		if Globals.patient.data[headers[198]] not in NA:
+			_messages += [{"role": "system", "content": "The patient's memory is %s." % [Globals.patient.data[headers[198]]]}]
+		else:
+			_messages += [{"role": "system", "content": "The patient's memory is unremarkable."}]
+	
+	if Globals.patient.data[headers[199]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's capability to perform calculations is %s." % [Globals.patient.data[headers[199]]]}]
+		if Globals.patient.data[headers[200]] not in NA:
+			_messages += [{"role": "system", "content": "The patient's capability to perform calculations is also %s." % [Globals.patient.data[headers[200]]]}]
+	else:
+		if Globals.patient.data[headers[200]] not in NA:
+			_messages += [{"role": "system", "content": "The patient's capability to perform calculations is %s." % [Globals.patient.data[headers[200]]]}]
+		else:
+			_messages += [{"role": "system", "content": "The patient's capability to perform calculations is unremarkable."}]
+	
+	if Globals.patient.data[headers[201]] not in NA:
+		if Globals.patient.data[headers[201]] == 'Intact':
+			_messages += [{"role": "system", "content": "The patient possesses a satisfactory amount of general knowledge."}]
+		if Globals.patient.data[headers[201]] == 'Deficient':
+			_messages += [{"role": "system", "content": "The patient's general knowledge is deficient."}]
+		if Globals.patient.data[headers[202]] not in NA:
+			_messages += [{"role": "system", "content": "The patient's fund of information is also %s." % [Globals.patient.data[headers[202]]]}]
+	else:
+		if Globals.patient.data[headers[202]] not in NA:
+			_messages += [{"role": "system", "content": "The patient's fund of information is %s." % [Globals.patient.data[headers[202]]]}]
+		else:
+			_messages += [{"role": "system", "content": "The patient's fund of information is unremarkable."}]
+	
+	if Globals.patient.data[headers[203]] not in NA:
+		if Globals.patient.data[headers[203]] == 'Intact':
+			_messages += [{"role": "system", "content": "The patient possesses a good level of insight."}]
+		if Globals.patient.data[headers[203]] == 'Deficient':
+			_messages += [{"role": "system", "content": "The patient's capacity for insight is deficient."}]
+		if Globals.patient.data[headers[204]] not in NA:
+			_messages += [{"role": "system", "content": "The patient's insight is also %s." % [Globals.patient.data[headers[204]]]}]
+	else:
+		if Globals.patient.data[headers[204]] not in NA:
+			_messages += [{"role": "system", "content": "The patient's insight is %s." % [Globals.patient.data[headers[204]]]}]
+		else:
+			_messages += [{"role": "system", "content": "The patient's insight is unremarkable."}]
+	
+	if Globals.patient.data[headers[205]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's capacity for good judgment is %s." % [Globals.patient.data[headers[205]]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's capacity for good judgment is unremarkable."}]
+	
+	if Globals.patient.data[headers[206]] not in NA:
+		if Globals.patient.data[headers[206]] == 'Intact':
+			_messages += [{"role": "system", "content": "The patient is capable of planning."}]
+		if Globals.patient.data[headers[206]] == 'Deficient':
+			_messages += [{"role": "system", "content": "The patient is incapable of planning."}]
+		if Globals.patient.data[headers[207]] not in NA:
+			_messages += [{"role": "system", "content": "The patient's capacity to plan is also %s." % [Globals.patient.data[headers[207]]]}]
+	else:
+		if Globals.patient.data[headers[207]] not in NA:
+			_messages += [{"role": "system", "content": "The patient's capacity to plan is %s." % [Globals.patient.data[headers[207]]]}]
+		else:
+			_messages += [{"role": "system", "content": "The patient's capacity to plan is unremarkable."}]
+	
+	if Globals.patient.data[headers[208]] not in NA:
+		var speech = Globals.patient.data[headers[208]]
+		if speech == 'Dysphasia':
+			_messages += [{"role": "system", "content": "The patient is unable to comprehend or formulate language."}]
+		if speech == 'Dysprosody':
+			_messages += [{"role": "system", "content": "The patient finds it difficult to control the way they speak."}]
+		if speech == 'Dysarthria':
+			_messages += [{"role": "system", "content": "The patient's speech is slurred or slowed."}]
+		if speech == 'Dysphonia':
+			_messages += [{"role": "system", "content": "The patient has poor voice quality."}]
+		else:
+			_messages += [{"role": "system", "content": "The patient's speech quality is %s." % [Globals.patient.data[headers[208]]]}]
+		if Globals.patient.data[headers[209]] not in NA:
+			_messages += [{"role": "system", "content": "The patient's speech quality is also affected by %s." % [Globals.patient.data[headers[209]]]}]
+	else:
+		if Globals.patient.data[headers[209]] not in NA:
+			_messages += [{"role": "system", "content": "The patient's speech quality is affected by %s." % [Globals.patient.data[headers[209]]]}]
+		else:
+			_messages += [{"role": "system", "content": "The patient's speech quality is unremarkable."}]
+	
+	if Globals.patient.data[headers[210]] not in NA:
+		if Globals.patient.data[headers[210]] == 'Apraxia':
+			_messages += [{"role": "system", "content": "The patient is unable to perform certain actions."}]
+		if Globals.patient.data[headers[210]] == 'Agnosia':
+			_messages += [{"role": "system", "content": "The patient is incapable of identifying objects using one or more of their senses."}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's high cortical functionals are unremarkable."}]
+	
+	if Globals.patient.data[headers[211]] not in NA:
+		_messages += [{"role": "system", "content": "The patient's total Glasgow Coma Score is %s." % [Globals.patient.data[headers[211]]]}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know the patient's Glasgow Coma Scale Score."}]
+	
+	if Globals.patient.data[headers[212]] not in NA:
+		var gcse = Globals.patient.data[headers[212]]
+		if gcse == '4':
+			_messages += [{"role": "system", "content": "The patient can open their eyes and keep them open on their own."}]
+		if gcse == '3':
+			_messages += [{"role": "system", "content": "The patient only opens their eyes when someone tells them to do so."}]
+		if gcse == '2':
+			_messages += [{"role": "system", "content": "The patient's eyes only open in response to feeling pressure."}]
+		if gcse == '1':
+			_messages += [{"role": "system", "content": "The patient's eyes don’t open for any reason."}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know the patient's Eye Response score for the Glasgow Coma Scale."}]
+	
+	if Globals.patient.data[headers[213]] not in NA:
+		var gcsv = Globals.patient.data[headers[213]]
+		if gcsv == '5':
+			_messages += [{"role": "system", "content": "The patient can correctly answer questions about who they are, where they’re at, the day or year, and similar questions."}]
+		if gcsv == '4':
+			_messages += [{"role": "system", "content": "The patient can answer questions, but their answers show they’re not fully aware of what’s happening."}]
+		if gcsv == '3':
+			_messages += [{"role": "system", "content": "The patient can talk and others can understand words they say, but their responses to questions don’t make sense."}]
+		if gcsv == '2':
+			_messages += [{"role": "system", "content": "The patient can’t talk and can only make sounds or noises."}]
+		if gcsv == '1':
+			_messages += [{"role": "system", "content": "The patient can't speak or make sounds."}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know the patient's Verbal Response score for the Glasgow Coma Scale."}]
+	
+	if Globals.patient.data[headers[214]] not in NA:
+		var gcsm = Globals.patient.data[headers[214]]
+		if gcsm == '6':
+			_messages += [{"role": "system", "content": "The patient follows instructions on how and when to move."}]
+		if gcsm == '5':
+			_messages += [{"role": "system", "content": "The patient intentionally moves away from something that presses on them."}]
+		if gcsm == '4':
+			_messages += [{"role": "system", "content": "The patient only moves away from something pressing on them as a reflex."}]
+		if gcsm == '3':
+			_messages += [{"role": "system", "content": "The patient's flex muscles (pull inward) in response to pressure."}]
+		if gcsm == '2':
+			_messages += [{"role": "system", "content": "The patient extends their muscles (stretch outward) in response to pressure."}]
+		if gcsm == '1':
+			_messages += [{"role": "system", "content": "The patient doesn't move in response to pressure."}]
+	else:
+		_messages += [{"role": "system", "content": "You do not know the patient's Motor Response score for the Glasgow Coma Scale."}]
+	
+	# MEDICATIONS
+	if Globals.patient.medications:
+		for med in Globals.patient.medications:
+			var temp_med_str = "The patient is taking a" + ("n" if med[0][0].to_lower() in ['a', 'e', 'i', 'o', 'u'] else "") + " %s called %s with a dosage of %s via the %s route."
+			_messages += [{"role": "system", "content": temp_med_str % [med[0], med[1], med[2], med[3]]}]
+	else:
+		_messages += [{"role": "system", "content": "The patient's medication is unknown. You must say that you are not sure about the medication the patient has taken."}]
+
+	

@@ -57,8 +57,6 @@ func map_info() -> void:
 	info_headers.clear()
 	info.clear()
 
-	print(data)
-
 
 ## Convert a patient field to its respective index
 func to_index(field) -> int:
