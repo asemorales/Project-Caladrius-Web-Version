@@ -1,5 +1,6 @@
 extends Node2D
 
+@export var patient_model: PatientModel
 @export var freq_penalty: float = 0
 @export var max_tokens: int = 1024
 @export var presence_penalty: float = 0
@@ -213,6 +214,7 @@ func call_llm(text: String) -> void:
 
 # Sends text to ChatGPT to receive a response
 func _call_ChatGPT(text: String) -> void:
+	patient_model.play_thinking()
 	# Prevent calling ChatGPT again if the previous call is unresolved
 	# if _is_calling_chatgpt:
 	# 	return
@@ -439,8 +441,15 @@ func _on_tts_request_completed(result, response_code, request_headers, body) -> 
 
 	_tts_audio_stream_player.set_stream(audio_stream)
 	_tts_audio_stream_player.play()
+	
+	patient_model.play_idle()
+	patient_model.face_play_talking()
+	
+	await _tts_audio_stream_player.finished
+	
+	patient_model.face.stop()
+	patient_model.face_play_default()
 	# _stored_streamed_audio.resize(0)
-
 
 func _on_audio_loaded(data: Array) -> void:
 	if data.size() == 0:
