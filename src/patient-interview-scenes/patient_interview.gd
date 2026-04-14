@@ -35,6 +35,20 @@ var _mentor_headers: PackedStringArray
 var _mentor_messages = []
 var _mentor_convo = []
 var _mentor_context = []
+var _mentor_fields
+var _mentor_score
+
+# Mentor LLM Scoring
+var _order_fields = []
+var intro_started = false
+var intro_first = true
+var closing_done = false
+var closed = false
+var prev_order = -1
+var current_order = -1
+var scores = ""
+var fields = ""
+var formatted_scores
 
 # TTS
 var _tts_http_request: HTTPRequest
@@ -100,6 +114,14 @@ func _ready() -> void:
 	_mentor_http_request.request_completed.connect(_on_mentor_request_completed)
 
 	_load_mentor_context()
+	
+	# Mentor LLM Scoring
+	var field_boundaries: Array = [0, 5, 25, 28, 33, 37, 43, 48, 57, 61, 67, 78, 90, 95, 100, 108, 113, 119, 132, 145, 152, 161, 171, 179, 190, 215, 216, 218]
+	_order_fields = []
+	for i in range(1, len(field_boundaries)):
+		_order_fields.append(Globals.patient.data.keys().slice(field_boundaries[i-1], field_boundaries[i]))
+
+	_get_mentor_fields()
 
 	# TTS
 	_tts_http_request = HTTPRequest.new()
@@ -419,6 +441,8 @@ func _on_mentor_request_completed(result, response_code, request_headers, body) 
 		"role": "assistant",
 		"content": message["content"]
 	})
+	
+	_grade_response(message["content"])
 
 
 func _on_tts_request_completed(result, response_code, request_headers, body) -> void:
@@ -2298,4 +2322,140 @@ func _load_third_person_context() -> void:
 	else:
 		_messages += [{"role": "system", "content": "The patient's medication is unknown. You must say that you are not sure about the medication the patient has taken."}]
 
+
+func _get_mentor_fields() -> void:
+	var mentorfieldscsv = [    
+		['Chief Complaint'], 
+		['Provocation', 'Quality', 'Region', 'Severity', 'Timing', 'Term', 'Delivered Via', 'To A (Age)', 'G', 'P', 'BW', 'Attended By First Name', 'Attended By Last Name', 'Perinatal CX', 'Fever', 'Weight Gain', 'Weight Loss', 'Weakness', 'Fatigue', 'Rashes', 'Lumps', 'Sores', 'Itching', 'Muscle Pains', 'Joint Pains', 'Changes in Skin Color', 'Joint Swelling', 'Changes in Hair/Nails', 'Gout', 'Headache', 'Dizziness', 'Blurring of Vision', 'Tinnitus', 'Deafness', 'Nosebleeds', 'Frequent Colds', 'Hoarseness', 'Dry Mouth', 'Gum Bleeding', 'Enlarged Lymph Nodes', 'Dyspnea', 'Hemoptysis', 'Cough', 'Wheezing', 'Palpitations', 'Chest Pains', 'Syncope', 'Orthopnea', 'Nausea', 'Vomiting', 'Dysphagia', 'Heartburn', 'Change in Bowel Habits', 'Rectal Bleeding', 'Jaundice', 'Nocturia', 'Dysuria', 'Urinary Frequency', 'Hematuria', 'Excessive Sweating', 'Heat Intolerance', 'Polyuria', 'Excessive Thirst', 'Cold Intolerance', 'History of Tuberculosis', 'History of Asthma', 'History of Diabetes', 'History of Hypertension', 'History of Psychiatric Consult', 'History of Cancer', 'Prior Surgeries/Hospitalizations', 'History of Allergies', 'Cancer Site in History', 'Prior Surgeries Or Hospitalization Dates', 'Prior Surgeries Or Hospitalization Reasons', 'Allergies in History', 'Family History of Tuberculosis', 'Family History of Asthma', 'Family History of Psychiatric Consult', 'Family History of Diabetes', 'Family History of Cardiovascular Disease', 'Family History of Cancer', 'Family History of Allergies', 'Cancer Site in Family History', 'Relationship To Cancer Patient', 'Allergies In Family History', 'Genogram (Describe Through Text)', 'Social And Environmental History', 'Last Menstrual Period (YYYY-MM-DD)', 'Previous Menstrual Period (YYYY-MM-DD)', 'Duration Of Menses', 'Interval Of Menses', 'Volume Of Menses', 'Menarche', 'Coitarche', 'DPT/Polio Immunization', 'HIB Immunization', 'Hepatitis B Immunization', 'MMR Immunization', 'Measles Immunization', 'Varicella Immunization', 'Pneumococcal Immunization', 'Influenza Immunization', 'Hepatitis A Immunization', 'DPT/Polio Doses', 'HIB Doses', 'Hepatitis B Doses', 'MMR Doses', 'Measles Doses', 'Varicella Doses', 'Pneumococcal Doses', 'Influenza Doses', 'Hepatitis A Doses', 'Medications'], 
+		['Age', 'Sex', 'Provocation', 'Quality', 'Region', 'Severity', 'Timing', 'History Of Present Illness', 'Breastfed Till', 'Formula', 'Weaning Age', 'Current Diet', 'Food Allergy', 'Gross Motor', 'Adaptive-Fine Motor', 'Speech', 'Fever', 'Weight Gain', 'Weight Loss', 'Weakness', 'Fatigue', 'Other General Symptoms', 'Rashes', 'Lumps', 'Sores', 'Itching', 'Muscle Pains', 'Joint Pains', 'Changes in Skin Color', 'Joint Swelling', 'Changes in Hair/Nails', 'Gout', 'Other Musculoskeletal or Dermatologic Symptoms', 'Headache', 'Dizziness', 'Blurring of Vision', 'Tinnitus', 'Deafness', 'Nosebleeds', 'Frequent Colds', 'Hoarseness', 'Dry Mouth', 'Gum Bleeding', 'Enlarged Lymph Nodes', 'Other HEENT Symptoms', 'Dyspnea', 'Hemoptysis', 'Cough', 'Wheezing', 'Other Respiratory Symptoms', 'Palpitations', 'Chest Pains', 'Syncope', 'Orthopnea', 'Other Cardiovascular Symptoms', 'Nausea', 'Vomiting', 'Dysphagia', 'Heartburn', 'Change in Bowel Habits', 'Rectal Bleeding', 'Jaundice', 'Other Gastrointestinal Symptoms', 'Nocturia', 'Dysuria', 'Urinary Frequency', 'Hematuria', 'Other Genitourinary Symptoms', 'Excessive Sweating', 'Heat Intolerance', 'Polyuria', 'Excessive Thirst', 'Cold Intolerance', 'Other Endocrine Symptoms', 'History of Tuberculosis', 'History of Asthma', 'History of Diabetes', 'History of Hypertension', 'History of Psychiatric Consult', 'History of Cancer', 'Prior Surgeries/Hospitalizations', 'History of Allergies', 'Cancer Site in History', 'Prior Surgeries Or Hospitalization Dates', 'Prior Surgeries Or Hospitalization Reasons', 'Allergies in History', 'Other Past Medical History', 'Genogram (Describe Through Text)', 'Social And Environmental History', 'Last Menstrual Period (YYYY-MM-DD)', 'Previous Menstrual Period (YYYY-MM-DD)', 'Duration Of Menses', 'Interval Of Menses', 'Volume Of Menses', 'Menarche', 'Coitarche', 'DPT/Polio Immunization', 'HIB Immunization', 'Hepatitis B Immunization', 'MMR Immunization', 'Measles Immunization', 'Varicella Immunization', 'Pneumococcal Immunization', 'Influenza Immunization', 'Hepatitis A Immunization', 'DPT/Polio Doses', 'HIB Doses', 'Hepatitis B Doses', 'MMR Doses', 'Measles Doses', 'Varicella Doses', 'Pneumococcal Doses', 'Influenza Doses', 'Hepatitis A Doses', 'Other Immunizations', 'Activities', 'Drugs', 'Sexual Activity', 'Medications'], 
+		['Dwelling Type (House, Apt.)', 'Number Of Household Members', 'Religion', 'Annual Family Income', 'Stakeholder', "Stakeholder's Interest In Issue", "Stakeholder's Role", "Stakeholder's Level Of Influence", 'Pertinent Beliefs', 'Impact On Family', 'Facilitating', 'Hindering', 'Burden Of Illness', 'Pertinent Legislation Or Policies', 'Personal And Social', 'Home', 'Education', 'Activities', 'Drugs', 'Sexual Activity', 'Family', 'Source Of Income And Dynamics', 'Additional Details Regarding History', 'Additional Details Regarding Context Including Ethical Considerations', 'History of Psychiatric Consult'], 
+		['Nationality', 'Language', 'Religion', 'Pertinent Beliefs', 'Impact On Family', 'Facilitating', 'Hindering', 'Home', 'Education', 'Family', 'Additional Details Regarding Context Including Ethical Considerations'], 
+		['Provocation', 'Timing', 'Concerns Regarding Problem', 'Impact On Family', 'Facilitating', 'Hindering', 'Burden Of Illness', 'Pertinent Legislation Or Policies', 'Fever', 'Weight Gain', 'Weight Loss', 'Weakness', 'Fatigue', 'Other General Symptoms', 'Rashes', 'Lumps', 'Sores', 'Itching', 'Muscle Pains', 'Joint Pains', 'Changes in Skin Color', 'Joint Swelling', 'Changes in Hair/Nails', 'Gout', 'Headache', 'Dizziness', 'Blurring of Vision', 'Tinnitus', 'Deafness', 'Nosebleeds', 'Frequent Colds', 'Hoarseness', 'Dry Mouth', 'Gum Bleeding', 'Enlarged Lymph Nodes', 'Dyspnea', 'Hemoptysis', 'Cough', 'Wheezing', 'Palpitations', 'Chest Pains', 'Syncope', 'Orthopnea', 'Nausea', 'Vomiting', 'Dysphagia', 'Heartburn', 'Change in Bowel Habits', 'Rectal Bleeding', 'Jaundice', 'Nocturia', 'Dysuria', 'Urinary Frequency', 'Hematuria', 'Excessive Sweating', 'Heat Intolerance', 'Polyuria', 'Excessive Thirst', 'Cold Intolerance', 'Duration Of Menses', 'Volume Of Menses', 'Home', 'Activities', 'Drugs', 'Sexual Activity', 'Family'], 
+		['Chief Complaint', 'Concerns Regarding Problem', 'Additional Details Regarding History'], 
+		['Other General Symptoms', 'Other Musculoskeletal or Dermatologic Symptoms', 'Other HEENT Symptoms', 'Other Respiratory Symptoms', 'Other Cardiovascular Symptoms', 'Other Gastrointestinal Symptoms', 'Other Genitourinary Symptoms', 'Other Endocrine Symptoms', 'Other Past Medical History', 'Other Family History', 'Concerns Regarding Problem', 'Additional Details Regarding History', 'Additional Details Regarding Context Including Ethical Considerations'], 
+		['Chief Complaint', 'Specific', 'Physical/Physiological', 'Psychosocial/Emotional', 'Cultural Issues', 'Quality of Life Effect', 'Feelings', 'Additional']
+	]
 	
+	# var json = JSON.new()
+	# json.parse(mentorfieldscsv)
+	# var response = json.get_data()
+	
+	# var mentorai_fields_file = FileAccess.open_encrypted_with_pass("user://mentorfields.dat", FileAccess.WRITE, "96iA!JxJtCRVhwpqj5z22ojKQK*&z3ZFSHRpLJ*GHBnrDJsxy9y5#P^4o4@sJe5uG*zK@L#WhydFvmP*rSbKwEen72qZ45AkxuNQ2qE*A&KJbLpFz4mao5fzeQ4R$p43")
+	# var json_string = JSON.stringify(response)
+	# mentorai_fields_file.store_line(json_string)
+	# mentorai_fields_file.close()
+	
+	var patient = {}
+	for i in range(len(Globals.patient.data.keys())):
+		patient[Globals.patient.data.keys()[i]] = Globals.patient.data[Globals.patient.data.keys()[i]]
+
+	var NA = ["", "Not Applicable", "N/A", "NA", "not applicable"]
+	_mentor_fields = {
+		"Introduction": {"Introduction":0},
+		"Agenda": {"Agenda":0},
+		"Consent": {"Consent":0},
+		"Confidentiality": {"Confidentiality":0},
+		"Privacy": {"Privacy":1},
+		"Avoid Multiple": {"Avoid Multiple":1},
+		"Order": {"Order": 1},
+		"Recap": {"Recap":0},
+		"Support": {"Support":0},
+		"Closing": {"Closing":0},
+	}
+	
+	for i in range(8):
+		_mentor_fields[mentorfieldscsv[8][i]] = {}
+		
+		for field in mentorfieldscsv[i]:
+			if patient[field] not in NA:
+				_mentor_fields[mentorfieldscsv[8][i]][field] = 0
+
+
+func get_overall_score() -> void:
+	print("\nCriteria\t\tScore")
+	for key in _mentor_fields.keys():
+		var avg = 0
+		for score in _mentor_fields[key].values():
+			avg += float(score)
+		print(key + ": " + str(avg/len(_mentor_fields[key])*100))
+	
+	_mentor_score = _mentor_fields
+	
+	_format_score()
+
+
+func _grade_response(mentor_response) -> void:
+	var split_response = []
+	for response in mentor_response.split("; "):
+		split_response.append(response.split(":"))
+	
+	for response in split_response:
+		for key in _mentor_fields.keys():
+			if response[0] in _mentor_fields[key].keys():
+				_mentor_fields[key][response[0]] = response[1]
+		
+		# Introduction
+		if response[0] == "Introduction":
+			if response[1] == "1":
+				intro_started = true
+				if not intro_first:
+					_mentor_fields["Introduction"]["Introduction"] = 0
+					_mentor_fields['Order']['Order'] = 0
+			else:
+				_mentor_fields["Introduction"]["Introduction"] = 0
+				_mentor_fields['Order']['Order'] = 0
+		
+		print("Mentor Response:")
+		print(response)
+		if response[0] != "Introduction" and response[1] == "1":
+			intro_first = false
+		
+		# Closing
+		if response[0] == "Closing":
+			closing_done = true
+		if closing_done == false and closed == false:
+			_mentor_fields["Closing"]["Closing"] = 0
+			_mentor_fields['Order']['Order'] = 0
+			closed = true
+		
+		# Check for order
+		for item in _order_fields:
+			if response[0] in item:
+				current_order = _order_fields.find(item)
+				
+		# Set Order to 0 if out of sequence
+		if current_order < prev_order:
+			_mentor_fields['Order']['Order'] = 0
+			print("Mentor : Order:0")
+		
+		prev_order = current_order
+
+
+func _format_score() -> void:
+	# Calculate scores
+	var combined_scores = {}
+	for key in _mentor_score.keys():
+		var avg = 0
+		for score in _mentor_score[key].values():
+			avg += float(score)
+		fields += key + "\n"
+		scores += str(_round_place(avg/len(_mentor_score[key])*100, 2)) + "%\n"
+		
+		var arr_fields = fields.split("\n")
+		var arr_scores = scores.split("\n")
+		for i in range(len(arr_fields)):
+			combined_scores[arr_fields[i]] = arr_scores[i]
+	
+	# Generate report (formatting)
+	formatted_scores = ""
+	for score in combined_scores:
+		if score == "":
+			continue
+		
+		formatted_scores += score + ": " + str(combined_scores[score]) + "\n"
+	
+	print(formatted_scores)
+
+
+func _round_place(num, places) -> Variant:
+	return (round(num * pow(10, places)) / pow(10, places))

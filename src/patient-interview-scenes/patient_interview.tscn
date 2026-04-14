@@ -149,4 +149,5 @@ stretch_mode = 4
 position = Vector2(497, 990)
 scale = Vector2(2, 2)
 
+[connection signal="pressed" from="CanvasLayer/CenterContainer2/VBoxContainer/CenterContainer/Button" to="." method="get_overall_score"]
 [connection signal="pressed" from="CanvasLayer/HBoxContainer/CenterContainer2/EnterButton" to="." method="_on_enter_button_pressed"]
