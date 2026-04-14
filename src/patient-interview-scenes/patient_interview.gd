@@ -1,5 +1,7 @@
 extends Node2D
 
+signal module_complete(module, success)
+
 @export var patient_model: PatientModel
 @export var freq_penalty: float = 0
 @export var max_tokens: int = 1024
@@ -18,6 +20,9 @@ var _mix_rate: float
 var _on_audio_loaded_callback = null
 var _on_transcript_loaded_callback = null
 
+var _interacted = false
+var _stt_fails = 0
+
 # Patient LLM
 var _chat_http_request: HTTPRequest
 var _chat_endpoint: String = "https://api.openai.com/v1/chat/completions"
@@ -26,6 +31,8 @@ var _chat_headers: PackedStringArray
 var _messages = []
 var _chat_convo = []
 var _chat_context = []
+
+var _chat_fails = 0
 
 # Mentor LLM
 var _mentor_http_request: HTTPRequest
@@ -37,6 +44,8 @@ var _mentor_convo = []
 var _mentor_context = []
 var _mentor_fields
 var _mentor_score
+
+var _mentor_fails = 0
 
 # Mentor LLM Scoring
 var _order_fields = []
@@ -55,6 +64,8 @@ var _tts_http_request: HTTPRequest
 var _tts_endpoint: String
 var _tts_headers: PackedStringArray
 var _tts_audio_stream_player: AudioStreamPlayer2D
+
+var tts_fails = 0
 
 var _stored_streamed_audio: PackedByteArray
 
@@ -98,6 +109,8 @@ func _ready() -> void:
 	var transcript_callback: JavaScriptObject = JavaScriptBridge.get_interface("transcript_callback")
 
 	transcript_callback.dataLoaded = _on_transcript_loaded_callback
+	
+	module_complete.connect(handleFailsafe)
 
 	# Patient LLM
 	_chat_http_request = HTTPRequest.new()
@@ -138,10 +151,55 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	if Input.is_action_just_pressed("Record"):
+	if not _interacted and Input.is_action_just_pressed("Record"):
 		JavaScriptBridge.eval("startRecording();")
-	elif Input.is_action_just_released("Record"):
+	elif not _interacted and Input.is_action_just_released("Record"):
 		JavaScriptBridge.eval("stopRecording();")
+		_interacted = true
+
+
+func handleFailsafe(module, success) -> void:
+	match module:
+		"stt":
+			if not success:
+				pass
+				
+				# Inform user STT failed
+				
+				# Retry sending STT
+			
+			if _stt_fails >= 3:
+				_interacted = false
+		"chat":
+			if not success:
+				pass
+				
+				# Inform user chat LLM failed
+				
+				# Retry sending chat LLM
+			
+			if _chat_fails >= 3:
+				_interacted = false
+		"mentor":
+			if not success:
+				pass
+				
+				# (Optionally) inform user mentor LLM failed
+				
+				# Retry sending mentor LLM
+		"tts":
+			if not success:
+				pass
+				
+				# Inform user TTS failed
+				
+				# (Optionally) Display LLM response onm the clipboard
+				
+				# Retry sending TTS
+			
+			_interacted = false
+		_:
+			printerr("Unknown module: " + module)
 
 
 func _setup_modules() -> void:
@@ -197,7 +255,9 @@ func _setup_tts() -> void:
 
 
 func _on_enter_button_pressed() -> void:
-	if enter_here.text != "":
+	if not _interacted and enter_here.text != "":
+		_interacted = true
+		
 		transcript.append_text("Doctor: " + enter_here.text + "\n")
 
 		call_llm(enter_here.text)
@@ -446,6 +506,8 @@ func _on_mentor_request_completed(result, response_code, request_headers, body) 
 
 
 func _on_tts_request_completed(result, response_code, request_headers, body) -> void:
+	_interacted = false
+	
 	if result == HTTPRequest.RESULT_TIMEOUT:
 		printerr("TTS request timed out!")
 		return
@@ -474,6 +536,7 @@ func _on_tts_request_completed(result, response_code, request_headers, body) -> 
 	patient_model.face.stop()
 	patient_model.face_play_default()
 	# _stored_streamed_audio.resize(0)
+
 
 func _on_audio_loaded(data: Array) -> void:
 	if data.size() == 0:
