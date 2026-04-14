@@ -1,6 +1,6 @@
 extends Node2D
 
-signal module_complete(module, success)
+signal module_complete(module, data, success)
 
 @export var patient_model: PatientModel
 @export var freq_penalty: float = 0
@@ -17,6 +17,7 @@ var _lang_code: String
 var _stt_audio_stream_player : AudioStreamPlayer2D
 var _stt_audio_effect: AudioEffect
 var _mix_rate: float
+var _stt_audio = null
 var _on_audio_loaded_callback = null
 var _on_transcript_loaded_callback = null
 
@@ -28,6 +29,7 @@ var _chat_http_request: HTTPRequest
 var _chat_endpoint: String = "https://api.openai.com/v1/chat/completions"
 var _chat_model: String = "ft:gpt-4o-mini-2024-07-18:ateneo-school-of-medicine-and-public-health:patient-eng-v11:Bb0jj7Oz"
 var _chat_headers: PackedStringArray
+var _chat_user_prompt = ""
 var _messages = []
 var _chat_convo = []
 var _chat_context = []
@@ -39,6 +41,7 @@ var _mentor_http_request: HTTPRequest
 var _mentor_endpoint: String = "https://api.openai.com/v1/chat/completions"
 var _mentor_model: String = "ft:gpt-4o-mini-2024-07-18:ateneo-school-of-medicine-and-public-health:mentor-v6:AjArl35r"
 var _mentor_headers: PackedStringArray
+var _mentor_user_prompt = ""
 var _mentor_messages = []
 var _mentor_convo = []
 var _mentor_context = []
@@ -64,8 +67,9 @@ var _tts_http_request: HTTPRequest
 var _tts_endpoint: String
 var _tts_headers: PackedStringArray
 var _tts_audio_stream_player: AudioStreamPlayer2D
+var _tts_text = ""
 
-var tts_fails = 0
+var _tts_fails = 0
 
 var _stored_streamed_audio: PackedByteArray
 
@@ -158,28 +162,42 @@ func _process(_delta: float) -> void:
 		_interacted = true
 
 
-func handleFailsafe(module, success) -> void:
+func handleFailsafe(module, data, success) -> void:
 	match module:
 		"stt":
 			if not success:
-				pass
-				
 				# Inform user STT failed
-				
+				transcript.append_text("[System]: Speech-to-Text module failed to transcribe the audio. Retrying...\n")
+
+				_stt_fails += 1
+
 				# Retry sending STT
+				call_stt(data)
+			else:
+				_stt_fails = 0
 			
 			if _stt_fails >= 3:
 				_interacted = false
+				_stt_fails = 0
+
+				transcript.append_text("[System]: Speech-to-Text module failed to transcribe the audio. Please try again.\n")
 		"chat":
 			if not success:
-				pass
-				
 				# Inform user chat LLM failed
+				transcript.append_text("[System]: Patient AI failed to generate a response. Retrying...\n")
+
+				_chat_fails += 1
 				
 				# Retry sending chat LLM
+				call_llm(data)
+			else:
+				_chat_fails = 0
 			
 			if _chat_fails >= 3:
 				_interacted = false
+				_chat_fails = 0
+
+				transcript.append_text("[System]: Patient AI failed to generate a response. Please try again.\n")
 		"mentor":
 			if not success:
 				pass
@@ -189,15 +207,21 @@ func handleFailsafe(module, success) -> void:
 				# Retry sending mentor LLM
 		"tts":
 			if not success:
-				pass
-				
 				# Inform user TTS failed
-				
-				# (Optionally) Display LLM response onm the clipboard
+				transcript.append_text("[System]: Text-to-Speech module failed to generate audio. Retrying...\n")
+
+				_tts_fails += 1
 				
 				# Retry sending TTS
-			
-			_interacted = false
+				call_tts(data)
+			else:
+				_tts_fails = 0
+
+			if _tts_fails >= 3:
+				_interacted = false
+				_tts_fails = 0
+
+				transcript.append_text("[System]: Text-to-Speech module failed to generate audio.\n")
 		_:
 			printerr("Unknown module: " + module)
 
@@ -290,6 +314,8 @@ func _call_GoogleCloud_v2_stt(audio) -> void:
 
 ## Sends text to the llm module to receive a response
 func call_llm(text: String) -> void:
+	_chat_user_prompt = text
+
 	_call_ChatGPT(text)
 	_call_mentor(text)
 
@@ -378,6 +404,8 @@ func _call_mentor(text: String) -> void:
 
 # Send text response to TTS module to get audio response
 func call_tts(text: String) -> void:
+	_tts_text = text
+
 	match Globals.tts:
 		0:
 			_call_ElevenLabs_tts(text)
@@ -426,8 +454,8 @@ func _on_llm_request_completed(result, response_code, request_headers, body) -> 
 	# Check if the HTTP request timed out
 	if result == HTTPRequest.RESULT_TIMEOUT:
 		printerr("ChatGPT request timed out!")
-		# _is_calling_chatgpt = false
-		# failed_retrieve_patient_response.emit()
+
+		module_complete.emit("chat", _chat_user_prompt, false)
 		return
 	
 	# Check if there was an error in the HTTP request response
@@ -436,8 +464,8 @@ func _on_llm_request_completed(result, response_code, request_headers, body) -> 
 		print(result)
 		print(request_headers)
 		print(body.get_string_from_utf8())
-		# _is_calling_chatgpt = false
-		# failed_retrieve_patient_response.emit()
+
+		module_complete.emit("chat", _chat_user_prompt, false)
 		return
 
 	# Parse and retrieve the patient AI response
@@ -457,6 +485,8 @@ func _on_llm_request_completed(result, response_code, request_headers, body) -> 
 	})
 
 	transcript.append_text("Patient: " + message["content"] + "\n")
+
+	module_complete.emit("chat", _chat_user_prompt, true)
 
 	# DEBUG
 	# for msg in _messages:
@@ -506,10 +536,9 @@ func _on_mentor_request_completed(result, response_code, request_headers, body) 
 
 
 func _on_tts_request_completed(result, response_code, request_headers, body) -> void:
-	_interacted = false
-	
 	if result == HTTPRequest.RESULT_TIMEOUT:
 		printerr("TTS request timed out!")
+		module_complete.emit("tts", _tts_text, false)
 		return
 	
 	if response_code != 200:
@@ -517,7 +546,10 @@ func _on_tts_request_completed(result, response_code, request_headers, body) -> 
 		print(result)
 		print(request_headers)
 		print(body.get_string_from_utf8())
+		module_complete.emit("tts", _tts_text, false)
 		return
+
+	module_complete.emit("tts", _tts_text, true)
 
 	_stored_streamed_audio.clear()
 	_stored_streamed_audio.append_array(body)
@@ -537,6 +569,8 @@ func _on_tts_request_completed(result, response_code, request_headers, body) -> 
 	patient_model.face_play_default()
 	# _stored_streamed_audio.resize(0)
 
+	_interacted = false
+
 
 func _on_audio_loaded(data: Array) -> void:
 	if data.size() == 0:
@@ -549,6 +583,7 @@ func _on_audio_loaded(data: Array) -> void:
 		return
 	
 	var dup = json.data.duplicate(true)
+	_stt_audio = dup["audio"]
 	call_stt(dup["audio"])
 
 
@@ -563,7 +598,18 @@ func _on_transcript_loaded(data: Array) -> void:
 		return
 	
 	var dup = json.data.duplicate(true)
-	call_llm(dup["result"])
+
+	match dup["result"]:
+		"No Audio":
+			print("No audio detected in the recording!")
+			module_complete.emit("stt", _stt_audio, false)
+		"Unintelligible":
+			print("Audio is unintelligible!")
+			module_complete.emit("stt", _stt_audio, false)
+		_:
+			# Transcript was successfully generated
+			module_complete.emit("stt", _stt_audio, true)
+			call_llm(dup["result"])
 
 
 func _load_mentor_context() -> void:

@@ -8,6 +8,7 @@ var _on_secrets_loaded_callback = null
 var _on_auth_token_callback = null
 var _on_database_callback = null
 
+# @onready var loading_screen := $LoadingScreenLayer/LoadingScreen
 @onready var start_menu: MarginContainer = $StartMenu
 @onready var settings_menu: MarginContainer = $SettingsMenu
 
@@ -61,6 +62,8 @@ func _on_start_button_pressed() -> void:
 
 		print("Loaded secrets via web!")
 
+		# loading_screen.start_loading_screen()
+
 		await Globals.secrets_loaded
 
 		# Get Google auth token
@@ -98,6 +101,8 @@ func _on_start_button_pressed() -> void:
 		await obtained_database_data
 
 		Globals.patient_data_loaded.emit()
+
+		# loading_screen.stop_loading_screen()
 	else:
 		if FileAccess.file_exists("res://src/auth/secrets.json"):
 			# Get the data

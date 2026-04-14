@@ -11,14 +11,14 @@ var _access_token
 
 
 func _ready() -> void:
-	loading_screen.start_loading_screen()
+	#loading_screen.start_loading_screen()
 
 	JavaScriptBridge.eval("setupAudio();")
 
 	# await authenticated
-	await get_tree().create_timer(5).timeout
+	#await get_tree().create_timer(5).timeout
 	main_menu.visible = true
-	loading_screen.stop_loading_screen()
+	#loading_screen.stop_loading_screen()
 
 
 func _is_access_token_valid() -> bool:
