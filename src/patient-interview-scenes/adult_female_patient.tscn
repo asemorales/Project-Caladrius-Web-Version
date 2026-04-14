@@ -98,7 +98,7 @@ animations = [{
 }],
 "loop": false,
 "name": &"blink",
-"speed": 9.0
+"speed": 12.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -1828,7 +1828,7 @@ editor_settings/show_bone_gizmo = false
 [node name="LeftHand" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck/LeftShoulder/UpperLeftArm/LowerLeftArm" unique_id=305787893]
 position = Vector2(117, 6)
 rotation = 0.047881722
-scale = Vector2(0.9999989, 0.9999989)
+scale = Vector2(0.99999887, 0.99999887)
 rest = Transform2D(0.9988536, 0.047863416, -0.047863416, 0.9988536, 117, 6)
 auto_calculate_length_and_angle = false
 length = 50.0
@@ -2069,7 +2069,10 @@ bones = ["Waist", PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0), "Waist/LowerBody",
 position = Vector2(-5.282585, -312.7189)
 rotation = -0.13108353
 sprite_frames = SubResource("SpriteFrames_cm3vv")
+animation = &"blink"
 autoplay = "default"
+frame = 3
+frame_progress = 1.0
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1241485394]
 libraries/ = SubResource("AnimationLibrary_jbhw1")

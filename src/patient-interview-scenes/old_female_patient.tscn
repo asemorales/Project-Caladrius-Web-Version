@@ -5,104 +5,104 @@
 [ext_resource type="Texture2D" uid="uid://b88i2bwlhk3ec" path="res://src/assets/patient-interview-assets/CaladriusPatientSprites.png" id="3_eho72"]
 [ext_resource type="Texture2D" uid="uid://cg7y3a7n2lfby" path="res://src/assets/patient-interview-assets/CaladriusFaces.png" id="4_l7tbb"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_tsqqw"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_fc7ur"]
 atlas = ExtResource("4_l7tbb")
-region = Rect2(480, 120, 120, 120)
+region = Rect2(480, 600, 120, 120)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_tltbu"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_heqjm"]
 atlas = ExtResource("4_l7tbb")
-region = Rect2(600, 120, 120, 120)
+region = Rect2(600, 600, 120, 120)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_thtyv"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_eho72"]
 atlas = ExtResource("4_l7tbb")
-region = Rect2(480, 120, 120, 120)
+region = Rect2(480, 600, 120, 120)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_jbhw1"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_l7tbb"]
 atlas = ExtResource("4_l7tbb")
-region = Rect2(360, 120, 120, 120)
+region = Rect2(360, 600, 120, 120)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_o782h"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_dvr30"]
 atlas = ExtResource("4_l7tbb")
-region = Rect2(360, 120, 120, 120)
+region = Rect2(360, 600, 120, 120)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_cm3vv"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_gywuy"]
 atlas = ExtResource("4_l7tbb")
-region = Rect2(0, 0, 120, 120)
+region = Rect2(0, 480, 120, 120)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_uq3cy"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_n4m7g"]
 atlas = ExtResource("4_l7tbb")
-region = Rect2(120, 0, 120, 120)
+region = Rect2(120, 480, 120, 120)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_0lfs6"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_bqd8q"]
 atlas = ExtResource("4_l7tbb")
-region = Rect2(240, 0, 120, 120)
+region = Rect2(240, 480, 120, 120)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_pw5yy"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_l14e4"]
 atlas = ExtResource("4_l7tbb")
-region = Rect2(360, 0, 120, 120)
+region = Rect2(360, 480, 120, 120)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_l675n"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_3jjc3"]
 atlas = ExtResource("4_l7tbb")
-region = Rect2(480, 0, 120, 120)
+region = Rect2(480, 480, 120, 120)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_adons"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_1jaut"]
 atlas = ExtResource("4_l7tbb")
-region = Rect2(600, 0, 120, 120)
+region = Rect2(600, 480, 120, 120)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_gilv3"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_0s36y"]
 atlas = ExtResource("4_l7tbb")
-region = Rect2(240, 120, 120, 120)
+region = Rect2(240, 600, 120, 120)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_ova0m"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_tiltg"]
 atlas = ExtResource("4_l7tbb")
-region = Rect2(120, 120, 120, 120)
+region = Rect2(120, 600, 120, 120)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_hrkqj"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_k8v3f"]
 atlas = ExtResource("4_l7tbb")
-region = Rect2(0, 120, 120, 120)
+region = Rect2(0, 600, 120, 120)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_8uon8"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_tl0ay"]
 atlas = ExtResource("4_l7tbb")
-region = Rect2(0, 120, 120, 120)
+region = Rect2(0, 600, 120, 120)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_xghgo"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_2f2uf"]
 atlas = ExtResource("4_l7tbb")
-region = Rect2(120, 120, 120, 120)
+region = Rect2(120, 600, 120, 120)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_4vinx"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_xskys"]
 atlas = ExtResource("4_l7tbb")
-region = Rect2(240, 120, 120, 120)
+region = Rect2(240, 600, 120, 120)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_boqfu"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_m6oxw"]
 atlas = ExtResource("4_l7tbb")
-region = Rect2(0, 120, 120, 120)
+region = Rect2(0, 600, 120, 120)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_qwe1o"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_223im"]
 atlas = ExtResource("4_l7tbb")
-region = Rect2(240, 120, 120, 120)
+region = Rect2(240, 600, 120, 120)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_cm3vv"]
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_tsqqw")
+"texture": SubResource("AtlasTexture_fc7ur")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_tltbu")
+"texture": SubResource("AtlasTexture_heqjm")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_thtyv")
+"texture": SubResource("AtlasTexture_eho72")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_jbhw1")
+"texture": SubResource("AtlasTexture_l7tbb")
 }],
 "loop": false,
 "name": &"blink",
-"speed": 9.0
+"speed": 12.0
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_o782h")
+"texture": SubResource("AtlasTexture_dvr30")
 }],
 "loop": true,
 "name": &"default",
@@ -110,22 +110,22 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_cm3vv")
+"texture": SubResource("AtlasTexture_gywuy")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_uq3cy")
+"texture": SubResource("AtlasTexture_n4m7g")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_0lfs6")
+"texture": SubResource("AtlasTexture_bqd8q")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_pw5yy")
+"texture": SubResource("AtlasTexture_l14e4")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_l675n")
+"texture": SubResource("AtlasTexture_3jjc3")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_adons")
+"texture": SubResource("AtlasTexture_1jaut")
 }],
 "loop": true,
 "name": &"talking",
@@ -133,13 +133,13 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_gilv3")
+"texture": SubResource("AtlasTexture_0s36y")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_ova0m")
+"texture": SubResource("AtlasTexture_tiltg")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_hrkqj")
+"texture": SubResource("AtlasTexture_k8v3f")
 }],
 "loop": false,
 "name": &"think_transition_to_left",
@@ -147,13 +147,13 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_8uon8")
+"texture": SubResource("AtlasTexture_tl0ay")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_xghgo")
+"texture": SubResource("AtlasTexture_2f2uf")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_4vinx")
+"texture": SubResource("AtlasTexture_xskys")
 }],
 "loop": false,
 "name": &"think_transition_to_right",
@@ -161,7 +161,7 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_boqfu")
+"texture": SubResource("AtlasTexture_m6oxw")
 }],
 "loop": true,
 "name": &"thinking_left",
@@ -169,7 +169,7 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_qwe1o")
+"texture": SubResource("AtlasTexture_223im")
 }],
 "loop": true,
 "name": &"thinking_right",
@@ -1031,18 +1031,22 @@ script = ExtResource("1_fc7ur")
 [node name="Waist" type="Bone2D" parent="Skeleton2D" unique_id=491333191]
 position = Vector2(0, 34)
 rest = Transform2D(1, 0, 0, 1, 0, 34)
+editor_settings/show_bone_gizmo = false
 
 [node name="LowerBody" type="Bone2D" parent="Skeleton2D/Waist" unique_id=1413318704]
 position = Vector2(0, -50)
 rest = Transform2D(1, 0, 0, 1, 0, -50)
+editor_settings/show_bone_gizmo = false
 
 [node name="UpperBody" type="Bone2D" parent="Skeleton2D/Waist/LowerBody" unique_id=300977576]
 position = Vector2(0, -85)
 rest = Transform2D(1, 0, 0, 1, 0, -85)
+editor_settings/show_bone_gizmo = false
 
 [node name="Neck" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody" unique_id=2140396377]
 position = Vector2(0, -118)
 rest = Transform2D(1, 0, 0, 1, 0, -118)
+editor_settings/show_bone_gizmo = false
 
 [node name="Head" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck" unique_id=100299977]
 position = Vector2(0, -33)
@@ -1051,6 +1055,7 @@ rest = Transform2D(1, 0, 0, 1, 0, -33)
 auto_calculate_length_and_angle = false
 length = 50.0
 bone_angle = -90.0
+editor_settings/show_bone_gizmo = false
 
 [node name="RemoteTransform2D" type="RemoteTransform2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck/Head" unique_id=1771835308]
 position = Vector2(1, -48)
@@ -1059,55 +1064,65 @@ remote_path = NodePath("../../../../../../../Polygons/Face")
 [node name="RightShoulder" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck" unique_id=185325719]
 position = Vector2(-30, -1)
 rest = Transform2D(1, 0, 0, 1, -30, -1)
+editor_settings/show_bone_gizmo = false
 
 [node name="UpperRightArm" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck/RightShoulder" unique_id=1658647348]
 position = Vector2(-37, 18)
 rotation = -1.3089969
 rest = Transform2D(1, 0, 0, 1, -37, 18)
+editor_settings/show_bone_gizmo = false
 
 [node name="LowerRightArm" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck/RightShoulder/UpperRightArm" unique_id=1924152695]
 position = Vector2(-129, 4)
 rotation = -2.7179022
 rest = Transform2D(1, 0, 0, 1, -129, 4)
+editor_settings/show_bone_gizmo = false
 
 [node name="RightHand" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck/RightShoulder/UpperRightArm/LowerRightArm" unique_id=2054265614]
 position = Vector2(-109.00001, 8)
 rotation = -0.12202929
-scale = Vector2(0.9999995, 0.9999995)
+scale = Vector2(0.9999996, 0.9999996)
 rest = Transform2D(0.99885356, 0.047863413, -0.047863413, 0.99885356, -109.00001, 8)
 auto_calculate_length_and_angle = false
 length = 50.0
 bone_angle = 159.99994
+editor_settings/show_bone_gizmo = false
 
 [node name="LeftShoulder" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck" unique_id=741679619]
 position = Vector2(30, -1)
 rest = Transform2D(1, 0, 0, 1, 30, -1)
+editor_settings/show_bone_gizmo = false
 
 [node name="UpperLeftArm" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck/LeftShoulder" unique_id=1499522865]
 position = Vector2(37, 18)
 rotation = 1.3089969
 rest = Transform2D(1, 0, 0, 1, 37, 18)
+editor_settings/show_bone_gizmo = false
 
 [node name="LowerLeftArm" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck/LeftShoulder/UpperLeftArm" unique_id=1253594203]
 position = Vector2(127, 4)
 rest = Transform2D(1, 0, 0, 1, 127, 4)
+editor_settings/show_bone_gizmo = false
 
 [node name="LeftHand" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck/LeftShoulder/UpperLeftArm/LowerLeftArm" unique_id=305787893]
 position = Vector2(117, 6)
 rotation = 0.047881722
-scale = Vector2(0.9999995, 0.9999995)
+scale = Vector2(0.9999996, 0.9999996)
 rest = Transform2D(0.99885356, 0.047863413, -0.047863413, 0.99885356, 117, 6)
 auto_calculate_length_and_angle = false
 length = 50.0
 bone_angle = 9.999996
+editor_settings/show_bone_gizmo = false
 
 [node name="UpperRightLeg" type="Bone2D" parent="Skeleton2D/Waist" unique_id=1542018333]
 position = Vector2(-56, -12)
 rest = Transform2D(1, 0, 0, 1, -56, -12)
+editor_settings/show_bone_gizmo = false
 
 [node name="LowerRightLeg" type="Bone2D" parent="Skeleton2D/Waist/UpperRightLeg" unique_id=1865498348]
 position = Vector2(8, 177)
 rest = Transform2D(1, 0, 0, 1, 8, 177)
+editor_settings/show_bone_gizmo = false
 
 [node name="RightFoot" type="Bone2D" parent="Skeleton2D/Waist/UpperRightLeg/LowerRightLeg" unique_id=1034742758]
 position = Vector2(4, 198)
@@ -1115,14 +1130,17 @@ rest = Transform2D(1, 0, 0, 1, 4, 198)
 auto_calculate_length_and_angle = false
 length = 50.0
 bone_angle = 130.0
+editor_settings/show_bone_gizmo = false
 
 [node name="UpperLeftLeg" type="Bone2D" parent="Skeleton2D/Waist" unique_id=403910512]
 position = Vector2(56, -12)
 rest = Transform2D(1, 0, 0, 1, 56, -12)
+editor_settings/show_bone_gizmo = false
 
 [node name="LowerLeftLeg" type="Bone2D" parent="Skeleton2D/Waist/UpperLeftLeg" unique_id=790976210]
 position = Vector2(-8, 177)
 rest = Transform2D(1, 0, 0, 1, -8, 177)
+editor_settings/show_bone_gizmo = false
 
 [node name="LeftFoot" type="Bone2D" parent="Skeleton2D/Waist/UpperLeftLeg/LowerLeftLeg" unique_id=251872731]
 position = Vector2(-4, 198)
@@ -1130,8 +1148,10 @@ rest = Transform2D(1, 0, 0, 1, -4, 198)
 auto_calculate_length_and_angle = false
 length = 50.0
 bone_angle = 49.999992
+editor_settings/show_bone_gizmo = false
 
 [node name="OldFemalePatient" type="Sprite2D" parent="." unique_id=1031452520]
+visible = false
 position = Vector2(26, 28)
 texture = ExtResource("2_fc7ur")
 
@@ -1320,10 +1340,12 @@ polygons = [PackedInt32Array(6, 7, 0, 1, 2, 3, 4, 5)]
 bones = ["Waist", PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0), "Waist/LowerBody", PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0), "Waist/LowerBody/UpperBody", PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0), "Waist/LowerBody/UpperBody/Neck", PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0), "Waist/LowerBody/UpperBody/Neck/Head", PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1), "Waist/LowerBody/UpperBody/Neck/RightShoulder", PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0), "Waist/LowerBody/UpperBody/Neck/RightShoulder/UpperRightArm", PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0), "Waist/LowerBody/UpperBody/Neck/RightShoulder/UpperRightArm/LowerRightArm", PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0), "Waist/LowerBody/UpperBody/Neck/RightShoulder/UpperRightArm/LowerRightArm/RightHand", PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0)]
 
 [node name="Face" type="AnimatedSprite2D" parent="Polygons" unique_id=94285394]
-visible = false
 position = Vector2(1, -300)
 sprite_frames = SubResource("SpriteFrames_cm3vv")
+animation = &"blink"
 autoplay = "default"
+frame = 3
+frame_progress = 1.0
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1241485394]
 libraries/ = SubResource("AnimationLibrary_jbhw1")
