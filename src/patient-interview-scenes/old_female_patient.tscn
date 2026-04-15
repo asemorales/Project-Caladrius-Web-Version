@@ -1075,6 +1075,7 @@ editor_settings/show_bone_gizmo = false
 [node name="LowerRightArm" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck/RightShoulder/UpperRightArm" unique_id=1924152695]
 position = Vector2(-129, 4)
 rotation = -2.7179022
+scale = Vector2(0.99999994, 0.99999994)
 rest = Transform2D(1, 0, 0, 1, -129, 4)
 editor_settings/show_bone_gizmo = false
 
@@ -1107,7 +1108,7 @@ editor_settings/show_bone_gizmo = false
 [node name="LeftHand" type="Bone2D" parent="Skeleton2D/Waist/LowerBody/UpperBody/Neck/LeftShoulder/UpperLeftArm/LowerLeftArm" unique_id=305787893]
 position = Vector2(117, 6)
 rotation = 0.047881722
-scale = Vector2(0.9999996, 0.9999996)
+scale = Vector2(0.9999995, 0.9999995)
 rest = Transform2D(0.99885356, 0.047863413, -0.047863413, 0.99885356, 117, 6)
 auto_calculate_length_and_angle = false
 length = 50.0
@@ -1340,7 +1341,8 @@ polygons = [PackedInt32Array(6, 7, 0, 1, 2, 3, 4, 5)]
 bones = ["Waist", PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0), "Waist/LowerBody", PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0), "Waist/LowerBody/UpperBody", PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0), "Waist/LowerBody/UpperBody/Neck", PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0), "Waist/LowerBody/UpperBody/Neck/Head", PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1), "Waist/LowerBody/UpperBody/Neck/RightShoulder", PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0), "Waist/LowerBody/UpperBody/Neck/RightShoulder/UpperRightArm", PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0), "Waist/LowerBody/UpperBody/Neck/RightShoulder/UpperRightArm/LowerRightArm", PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0), "Waist/LowerBody/UpperBody/Neck/RightShoulder/UpperRightArm/LowerRightArm/RightHand", PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0)]
 
 [node name="Face" type="AnimatedSprite2D" parent="Polygons" unique_id=94285394]
-position = Vector2(1, -300)
+position = Vector2(-5.282585, -299.7189)
+rotation = -0.13108353
 sprite_frames = SubResource("SpriteFrames_cm3vv")
 animation = &"blink"
 autoplay = "default"
