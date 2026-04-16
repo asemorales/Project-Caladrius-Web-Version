@@ -165,7 +165,7 @@ func _process(_delta: float) -> void:
 func handleFailsafe(module, data, success) -> void:
 	match module:
 		"stt":
-			if not success:
+			if not success and _stt_fails < 3:
 				# Inform user STT failed
 				transcript.append_text("[System]: Speech-to-Text module failed to transcribe the audio. Retrying...\n")
 
@@ -178,11 +178,11 @@ func handleFailsafe(module, data, success) -> void:
 			
 			if _stt_fails >= 3:
 				_interacted = false
-				_stt_fails = 0
+				#_stt_fails = 0
 
 				transcript.append_text("[System]: Speech-to-Text module failed to transcribe the audio. Please try again.\n")
 		"chat":
-			if not success:
+			if not success and _chat_fails < 3:
 				# Inform user chat LLM failed
 				transcript.append_text("[System]: Patient AI failed to generate a response. Retrying...\n")
 
@@ -195,7 +195,7 @@ func handleFailsafe(module, data, success) -> void:
 			
 			if _chat_fails >= 3:
 				_interacted = false
-				_chat_fails = 0
+				#_chat_fails = 0
 
 				transcript.append_text("[System]: Patient AI failed to generate a response. Please try again.\n")
 		"mentor":
@@ -206,7 +206,7 @@ func handleFailsafe(module, data, success) -> void:
 				
 				# Retry sending mentor LLM
 		"tts":
-			if not success:
+			if not success and _tts_fails < 3:
 				# Inform user TTS failed
 				transcript.append_text("[System]: Text-to-Speech module failed to generate audio. Retrying...\n")
 
@@ -219,9 +219,12 @@ func handleFailsafe(module, data, success) -> void:
 
 			if _tts_fails >= 3:
 				_interacted = false
-				_tts_fails = 0
-
-				transcript.append_text("[System]: Text-to-Speech module failed to generate audio.\n")
+				#_tts_fails = 0
+				transcript.append_text("[System]: Text-to-Speech module failed to generate audio after 3 attempts. Stopping TTS.\n")
+				
+				patient_model.play_idle()
+				patient_model.face.stop()
+				patient_model.face_play_default()
 		_:
 			printerr("Unknown module: " + module)
 

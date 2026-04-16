@@ -8,12 +8,13 @@ var _on_secrets_loaded_callback = null
 var _on_auth_token_callback = null
 var _on_database_callback = null
 
-# @onready var loading_screen := $LoadingScreenLayer/LoadingScreen
+var main_menu
 @onready var start_menu: MarginContainer = $StartMenu
 @onready var settings_menu: MarginContainer = $SettingsMenu
 
 
 func _ready() -> void:
+	main_menu = get_tree().root.get_node("Main")
 	Globals.patient = PatientData.new()
 
 	_database_httprequest = HTTPRequest.new()
@@ -62,7 +63,7 @@ func _on_start_button_pressed() -> void:
 
 		print("Loaded secrets via web!")
 
-		# loading_screen.start_loading_screen()
+		main_menu.loading_screen.start_loading_screen()
 
 		await Globals.secrets_loaded
 
@@ -102,7 +103,7 @@ func _on_start_button_pressed() -> void:
 
 		Globals.patient_data_loaded.emit()
 
-		# loading_screen.stop_loading_screen()
+		main_menu.loading_screen.stop_loading_screen()
 	else:
 		if FileAccess.file_exists("res://src/auth/secrets.json"):
 			# Get the data

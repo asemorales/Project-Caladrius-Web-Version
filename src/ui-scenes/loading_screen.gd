@@ -1,3 +1,4 @@
+class_name LoadingScreen
 extends Control
 
 @onready var anim := $AnimationPlayer
