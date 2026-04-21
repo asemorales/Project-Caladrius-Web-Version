@@ -102,8 +102,12 @@ func _on_start_button_pressed() -> void:
 		await obtained_database_data
 
 		Globals.patient_data_loaded.emit()
-
+		
+		main_menu.patient_interview.load_patient_model(int(Globals.patient.data["Age"]), Globals.patient.data["Sex"])
+		
 		main_menu.loading_screen.stop_loading_screen()
+		print(Globals.patient)
+		print(Globals.patient.data)
 	else:
 		if FileAccess.file_exists("res://src/auth/secrets.json"):
 			# Get the data

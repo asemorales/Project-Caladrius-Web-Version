@@ -8,9 +8,8 @@
 [ext_resource type="Texture2D" uid="uid://dpymycyuiluc0" path="res://src/assets/ui-assets/ClipBoard.png" id="5_bheb3"]
 [ext_resource type="PackedScene" uid="uid://drgsac0e8v4yc" path="res://src/patient-interview-scenes/adult_female_patient.tscn" id="7_1ei3v"]
 
-[node name="PatientInterview" type="Node2D" unique_id=1148397498 node_paths=PackedStringArray("patient_model")]
+[node name="PatientInterview" type="Node2D" unique_id=1148397498]
 script = ExtResource("1_5yvnx")
-patient_model = NodePath("AdultFemalePatient")
 
 [node name="2dbg" type="Sprite2D" parent="." unique_id=1421212599]
 position = Vector2(960.00006, 590)
@@ -146,6 +145,7 @@ ignore_texture_size = true
 stretch_mode = 4
 
 [node name="AdultFemalePatient" parent="." unique_id=1260561808 instance=ExtResource("7_1ei3v")]
+visible = false
 position = Vector2(497, 990)
 scale = Vector2(2, 2)
 

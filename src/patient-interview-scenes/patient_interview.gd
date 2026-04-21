@@ -2,7 +2,7 @@ extends Node2D
 
 signal module_complete(module, data, success)
 
-@export var patient_model: PatientModel
+var patient_model
 @export var freq_penalty: float = 0
 @export var max_tokens: int = 1024
 @export var presence_penalty: float = 0
@@ -613,6 +613,25 @@ func _on_transcript_loaded(data: Array) -> void:
 			# Transcript was successfully generated
 			module_complete.emit("stt", _stt_audio, true)
 			call_llm(dup["result"])
+
+
+func load_patient_model(age : int, sex : String) -> void:
+	var patient
+	if age < 50:
+		if sex == "Male":
+			patient = load("res://src/patient-interview-scenes/adult_male_patient.tscn")
+		if sex == "Female":
+			patient = load("res://src/patient-interview-scenes/adult_female_patient.tscn")
+	elif age >= 50:
+		if sex == "Male":
+			patient = load("res://src/patient-interview-scenes/old_male_patient.tscn")
+		if sex == "Female":
+			patient = load("res://src/patient-interview-scenes/old_female_patient.tscn")
+	
+	patient_model = patient.instantiate()
+	add_child(patient_model)
+	patient_model.scale = Vector2(2, 2)
+	patient_model.position = Vector2(500, 990)
 
 
 func _load_mentor_context() -> void:
