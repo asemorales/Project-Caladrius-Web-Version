@@ -326,30 +326,10 @@ func call_llm(text: String) -> void:
 # Sends text to ChatGPT to receive a response
 func _call_ChatGPT(text: String) -> void:
 	patient_model.play_thinking()
-	# Prevent calling ChatGPT again if the previous call is unresolved
-	# if _is_calling_chatgpt:
-	# 	return
-	# _is_calling_chatgpt = true
-
-	# Also send text to the mentor AI for grading
-	# _mentor_http_request.call_ChatGPT(text)
-
-	#RAG
-	# var keyword_len: int = _keywords.size()
-	# var context_len: int = _context.size()
-
-	# # Check for keywords of all patient info categories
-	# for i in range(0, 219):
-	# 	# OOB prevention
-	# 	if i >= keyword_len or i >= context_len:
-	# 		break
-		
-	# 	# Check if keyword was mentioned
-	# 	for keyword in _keywords[i]:
-	# 		if keyword in text:
-	# 			# Add the appropriate context and stop checking keywords for the same context
-	# 			_messages += [_context[i]]
-	# 			break
+	
+	# Get vector representation of the user prompt
+	var vector: Array = _get_string_vector(text)
+	print(vector)
 
 	# Append the text to _messages for submission to ChatGPT and _convo for storage to a local transcript
 	_messages.append({
@@ -613,6 +593,56 @@ func _on_transcript_loaded(data: Array) -> void:
 			# Transcript was successfully generated
 			module_complete.emit("stt", _stt_audio, true)
 			call_llm(dup["result"])
+
+
+func _tokenize(string: String) -> Array:
+	var tokens: Array = []
+
+	var regex: RegEx = RegEx.new()
+	regex.compile("\\.+|-+|''|\"\"|n't|'s|'re|'ve|'m|'ll|'d|[0-9]*\\.[0-9]+|'[0-9]*[a-zA-Z]*|[0-9]+[a-zA-Z]+|[0-9]+ [0-9]+\\/[0-9]+|[0-9]{2}:[0-9]{2}|mr\\.|ms\\.|mrs\\.|mx\\.|dr\\.|jr\\.|sr\\.|[^a-zA-Z0-9 ]|[a-zA-Z]+|[0-9]+")
+
+	var words: Array = Array(string.split(" "))
+	for word: String in words:
+		var matches: Array = regex.search_all(word)
+
+		for match: RegExMatch in matches:
+			var token: String = word.substr(match.get_start(), match.get_end() - match.get_start())
+			tokens.append(token)
+
+	return tokens
+
+
+func _get_string_vector(string: String) -> Array:
+	var vector: Array = []
+	var words: Array = _tokenize(string.to_lower())
+
+	var average: int = 0
+	for word in words:
+		var word_vector: Array = _get_word_vector(word)
+		if word_vector.size() == 0:
+			continue
+		elif vector.size() == 0:
+			vector = word_vector
+
+			average += 1
+		else:
+			assert (vector.size() == word_vector.size())
+
+			for i in range(vector.size()):
+				vector[i] += word_vector[i]
+			average += 1
+	
+	for i in range(vector.size()):
+		vector[i] /= average
+	
+	return vector
+
+
+func _get_word_vector(word: String) -> Array:
+	if word in Embeddings.data:
+		return Embeddings.data[word]
+	else:
+		return []
 
 
 func load_patient_model(age : int, sex : String) -> void:
