@@ -86,6 +86,9 @@ func _on_start_button_pressed() -> void:
 		_get_sheet_database("Headers", "A" + str(header_row), "HK" + str(header_row))
 		await obtained_database_data
 
+		for header in Globals.patient.info_headers:
+			print(header)
+
 		var row = 3 + 1 # 1 = patient number 1 (temporarily hard coded to patient 1 for testing)
 		_get_sheet_database("Patient", "A" + str(row), "HK" + str(row))
 		await obtained_database_data
@@ -132,6 +135,65 @@ func _on_start_button_pressed() -> void:
 			Globals.secrets_loaded.emit()
 	
 	visible = false
+
+
+func _tokenize(string: String) -> Array:
+	var tokens: Array = []
+
+	var regex: RegEx = RegEx.new()
+	regex.compile("\\.+|-+|''|\"\"|n't|'s|'re|'ve|'m|'ll|'d|[0-9]*\\.[0-9]+|'[0-9]*[a-zA-Z]*|[0-9]+[a-zA-Z]+|[0-9]+ [0-9]+\\/[0-9]+|[0-9]{2}:[0-9]{2}|mr\\.|ms\\.|mrs\\.|mx\\.|dr\\.|jr\\.|sr\\.|[^a-zA-Z0-9 ]|[a-zA-Z]+|[0-9]+")
+
+	var words: Array = Array(string.split(" "))
+	for word: String in words:
+		print("Word: " + word)
+
+		var matches: Array = regex.search_all(word)
+
+		print("Matches:")
+		print(matches)
+
+		for match: RegExMatch in matches:
+			var token: String = word.substr(match.get_start(), match.get_end() - match.get_start())
+			tokens.append(token)
+
+	print("Tokens:")
+	print(tokens)
+	return tokens
+
+
+func _get_string_vector(string: String) -> Array:
+	var vector: Array = []
+	var words: Array = _tokenize(string.to_lower())
+
+	var average: int = 0
+	for word in words:
+		var word_vector: Array = _get_word_vector(word)
+		if word_vector.size() == 0:
+			continue
+		elif vector.size() == 0:
+			vector = word_vector
+
+			average += 1
+		else:
+			assert (vector.size() == word_vector.size())
+
+			for i in range(vector.size()):
+				vector[i] += word_vector[i]
+			average += 1
+	
+	for i in range(vector.size()):
+		vector[i] /= average
+	
+	return vector
+
+
+func _get_word_vector(word: String) -> Array:
+	if word in Embeddings.data:
+		print("Word found: " + word)
+		return Embeddings.data[word]
+	else:
+		print("Word not found: " + word)
+		return []
 
 
 func _on_secrets_loaded(data: Array):
@@ -270,6 +332,12 @@ func _on_database_data_loaded(data: Array) -> void:
 	match dup["sheet_name"]:
 		"Headers":
 			Globals.patient.set_info_headers(dup["values"][0])
+
+			for header in Globals.patient.info_headers:
+				Embeddings.header_embeddings_data[header] = _get_string_vector(header)
+			
+			print("Vectors:")
+			print(Embeddings.header_embeddings_data)
 		"Database_Parameters":
 			_database_params["Patients"] = int(dup["values"][0][0])
 			_database_params["Histories"] = int(dup["values"][0][1])
