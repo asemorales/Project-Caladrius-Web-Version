@@ -86,9 +86,6 @@ func _on_start_button_pressed() -> void:
 		_get_sheet_database("Headers", "A" + str(header_row), "HK" + str(header_row))
 		await obtained_database_data
 
-		for header in Globals.patient.info_headers:
-			print(header)
-
 		var row = 3 + 1 # 1 = patient number 1 (temporarily hard coded to patient 1 for testing)
 		_get_sheet_database("Patient", "A" + str(row), "HK" + str(row))
 		await obtained_database_data
@@ -109,8 +106,6 @@ func _on_start_button_pressed() -> void:
 		main_menu.patient_interview.load_patient_model(int(Globals.patient.data["Age"]), Globals.patient.data["Sex"])
 		
 		main_menu.loading_screen.stop_loading_screen()
-		print(Globals.patient)
-		print(Globals.patient.data)
 	else:
 		if FileAccess.file_exists("res://src/auth/secrets.json"):
 			# Get the data
@@ -145,19 +140,12 @@ func _tokenize(string: String) -> Array:
 
 	var words: Array = Array(string.split(" "))
 	for word: String in words:
-		print("Word: " + word)
-
 		var matches: Array = regex.search_all(word)
-
-		print("Matches:")
-		print(matches)
 
 		for match: RegExMatch in matches:
 			var token: String = word.substr(match.get_start(), match.get_end() - match.get_start())
 			tokens.append(token)
 
-	print("Tokens:")
-	print(tokens)
 	return tokens
 
 
@@ -189,10 +177,8 @@ func _get_string_vector(string: String) -> Array:
 
 func _get_word_vector(word: String) -> Array:
 	if word in Embeddings.data:
-		print("Word found: " + word)
 		return Embeddings.data[word]
 	else:
-		print("Word not found: " + word)
 		return []
 
 
@@ -335,9 +321,6 @@ func _on_database_data_loaded(data: Array) -> void:
 
 			for header in Globals.patient.info_headers:
 				Embeddings.header_embeddings_data[header] = _get_string_vector(header)
-			
-			print("Vectors:")
-			print(Embeddings.header_embeddings_data)
 		"Database_Parameters":
 			_database_params["Patients"] = int(dup["values"][0][0])
 			_database_params["Histories"] = int(dup["values"][0][1])
