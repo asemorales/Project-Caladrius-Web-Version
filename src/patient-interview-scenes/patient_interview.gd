@@ -332,7 +332,7 @@ func _call_ChatGPT(text: String) -> void:
 	var matching_vectors: Array = _get_closest_matches(vector, 10)
 	var matching_headers: Array = []
 	for match in matching_vectors:
-		var header = Embeddings.header_embeddings_data.find_key(match[1])
+		var header = match[2]
 		matching_headers.append(header)
 	
 	print("Matching Headers: " + str(matching_headers))
@@ -615,17 +615,17 @@ func _get_closest_matches(vector: Array, n: int) -> Array:
 
 
 func _sort_header_vectors(arr: Array) -> Array:
-	var vectors: Array = Embeddings.header_embeddings_data.values()
+	var headers = Embeddings.header_embeddings_data.keys()
 	var sorting_vectors: Array = []
-	for vector in vectors:
-		if not vector.size() == arr.size():
+	for header in headers:
+		if not Embeddings.header_embeddings_data[header].size() == arr.size():
 			print("Vector has size mismatch! Skipping vector.")
 			continue
-		sorting_vectors.append([_euclidean_distance(vector, arr), vector])
+		sorting_vectors.append([_euclidean_distance(Embeddings.header_embeddings_data[header], arr), Embeddings.header_embeddings_data[header], header])
 
 	print("Euclidean distances calculated for all header vectors. Sorting vectors...")
 	for item in sorting_vectors:
-		if item.size() != 2:
+		if item.size() != 3:
 			print("Item has size mismatch in sorting vectors!")
 	var sorted_vectors = _quicksort(sorting_vectors)
 	print("vectors sorted!")
@@ -654,7 +654,7 @@ func _quicksort(arr: Array) -> Array:
 	var right: Array = []
 
 	for item in copy:
-		if item.size() != 2:
+		if item.size() != 3:
 			print("Item has size mismatch!")
 
 		if item[0] == pivot[0]:
@@ -666,13 +666,13 @@ func _quicksort(arr: Array) -> Array:
 	print("Array split into left and right!")
 
 	for item in left:
-		if item.size() != 2:
+		if item.size() != 3:
 			print("Item has size mismatch in left array!")
 	for item in middle:
-		if item.size() != 2:
+		if item.size() != 3:
 			print("Item has size mismatch in middle array!")
 	for item in right:
-		if item.size() != 2:
+		if item.size() != 3:
 			print("Item has size mismatch in right array!")
 
 	print("Left size: " + str(left.size()) + ", Middle size: " + str(middle.size()) + ", Right size: " + str(right.size()))
