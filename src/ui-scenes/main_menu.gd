@@ -49,6 +49,11 @@ func _on_exit_only_button_pressed() -> void:
 #This is just for testing. Delete in Future
 # Nah, I need this (unless there's another button we can use to load the secrets)
 func _on_start_button_pressed() -> void:
+	var keys = Embeddings.data.keys()
+	for key in keys:
+		if not Embeddings.data[key].size() == 50:
+			print("Vector embeddings are not the correct size!")
+
 	if (OS.get_name() == "Web"):
 		_on_secrets_loaded_callback = JavaScriptBridge.create_callback(_on_secrets_loaded)
 
@@ -161,16 +166,31 @@ func _get_string_vector(string: String) -> Array:
 		elif vector.size() == 0:
 			vector = word_vector
 
+			var size = vector.size()
+			if not size == 50:
+				print("Word vector was initialized with the wrong size!")
+
 			average += 1
 		else:
 			assert (vector.size() == word_vector.size())
 
 			for i in range(vector.size()):
 				vector[i] += word_vector[i]
+			
 			average += 1
+	
+	if vector.size() == 0:
+		print("Vector of %s is empty!" % string)
+	elif not vector.size() == 50:
+		print("Vector of %s was built with the wrong size!" % string)
 	
 	for i in range(vector.size()):
 		vector[i] /= average
+	
+	if vector.size() == 0:
+		print("Final vector of %s is empty!" % string)
+	elif not vector.size() == 50:
+		print("Final vector of %s is not the correct size!" % string)
 	
 	return vector
 
@@ -321,6 +341,9 @@ func _on_database_data_loaded(data: Array) -> void:
 
 			for header in Globals.patient.info_headers:
 				Embeddings.header_embeddings_data[header] = _get_string_vector(header)
+			
+			print("Number of headers: %d" % Globals.patient.info_headers.size())
+			print("Number of header embeddings: %d" % Embeddings.header_embeddings_data.size())
 		"Database_Parameters":
 			_database_params["Patients"] = int(dup["values"][0][0])
 			_database_params["Histories"] = int(dup["values"][0][1])

@@ -329,7 +329,13 @@ func _call_ChatGPT(text: String) -> void:
 	
 	# Get vector representation of the user prompt
 	var vector: Array = _get_string_vector(text)
-	print(vector)
+	var matching_vectors: Array = _get_closest_matches(vector, 10)
+	var matching_headers: Array = []
+	for match in matching_vectors:
+		var header = Embeddings.header_embeddings_data.find_key(match[1])
+		matching_headers.append(header)
+	
+	print("Matching Headers: " + str(matching_headers))
 
 	# Append the text to _messages for submission to ChatGPT and _convo for storage to a local transcript
 	_messages.append({
@@ -593,6 +599,109 @@ func _on_transcript_loaded(data: Array) -> void:
 			# Transcript was successfully generated
 			module_complete.emit("stt", _stt_audio, true)
 			call_llm(dup["result"])
+
+
+func _get_closest_matches(vector: Array, n: int) -> Array:
+	var matches: Array = []
+
+	var sorted_vectors: Array = _sort_header_vectors(vector)
+
+	if n < sorted_vectors.size():
+		matches.append_array(sorted_vectors.slice(0, n))
+	else:
+		matches = sorted_vectors
+
+	return matches
+
+
+func _sort_header_vectors(arr: Array) -> Array:
+	var vectors: Array = Embeddings.header_embeddings_data.values()
+	var sorting_vectors: Array = []
+	for vector in vectors:
+		if not vector.size() == arr.size():
+			print("Vector has size mismatch! Skipping vector.")
+			continue
+		sorting_vectors.append([_euclidean_distance(vector, arr), vector])
+
+	print("Euclidean distances calculated for all header vectors. Sorting vectors...")
+	for item in sorting_vectors:
+		if item.size() != 2:
+			print("Item has size mismatch in sorting vectors!")
+	var sorted_vectors = _quicksort(sorting_vectors)
+	print("vectors sorted!")
+
+	return sorted_vectors
+
+
+func _quicksort(arr: Array) -> Array:
+	# Base Case
+	if arr.size() <= 1:
+		return arr
+	if arr.size() == 2:
+		if arr[0][0] > arr[1][0]:
+			return [arr[1], arr[0]]
+		else:
+			return arr
+
+	# Make a copy of the array and select a random pivot
+	var copy = arr.duplicate(true)
+	var pivot = copy.pick_random()
+	print("Pivot picked!")
+
+	# Split the array into two
+	var left: Array = []
+	var middle: Array = []
+	var right: Array = []
+
+	for item in copy:
+		if item.size() != 2:
+			print("Item has size mismatch!")
+
+		if item[0] == pivot[0]:
+			middle.append(item)
+		elif item[0] < pivot[0]:
+			left.append(item)
+		else:
+			right.append(item)
+	print("Array split into left and right!")
+
+	for item in left:
+		if item.size() != 2:
+			print("Item has size mismatch in left array!")
+	for item in middle:
+		if item.size() != 2:
+			print("Item has size mismatch in middle array!")
+	for item in right:
+		if item.size() != 2:
+			print("Item has size mismatch in right array!")
+
+	print("Left size: " + str(left.size()) + ", Middle size: " + str(middle.size()) + ", Right size: " + str(right.size()))
+
+	var sorted_left = _quicksort(left)
+	var sorted_right = _quicksort(right)
+
+	var sorted: Array = []
+	print("Beginning recursive calls...")
+	for item in sorted_left:
+		sorted.append(item)
+	for item in middle:
+		sorted.append(item)
+	for item in sorted_right:
+		sorted.append(item)
+
+	return sorted
+
+
+func _euclidean_distance(vec1: Array, vec2: Array) -> float:
+	print("Euclidean distance function called!")
+	assert (vec1.size() == vec2.size())
+	print("Calculating distance...")
+
+	var distance: float = 0
+	for i in range(vec1.size()):
+		distance += pow(vec1[i] - vec2[i], 2)
+	
+	return sqrt(abs(distance))
 
 
 func _tokenize(string: String) -> Array:
