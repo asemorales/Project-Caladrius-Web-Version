@@ -181,6 +181,10 @@ func handleFailsafe(module, data, success) -> void:
 				_interacted = false
 				#_stt_fails = 0
 
+				patient_model.play_idle()
+				patient_model.face.stop()
+				patient_model.face_play_default()
+
 				transcript.append_text("[System]: Speech-to-Text module failed to transcribe the audio. Please try again.\n")
 		"chat":
 			if not success and _chat_fails < 3:
@@ -197,6 +201,10 @@ func handleFailsafe(module, data, success) -> void:
 			if _chat_fails >= 3:
 				_interacted = false
 				#_chat_fails = 0
+
+				patient_model.play_idle()
+				patient_model.face.stop()
+				patient_model.face_play_default()
 
 				transcript.append_text("[System]: Patient AI failed to generate a response. Please try again.\n")
 		"mentor":
