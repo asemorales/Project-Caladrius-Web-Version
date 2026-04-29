@@ -356,6 +356,8 @@ func _call_ChatGPT(text: String) -> void:
 		if context_index < _chat_context.size() and not _chat_context[context_index].size() == 0:
 			_messages.append(_chat_context[context_index])
 			print(_chat_context[context_index])
+	
+	_messages.append({"role": "system", "content": 'You are roleplaying as a patient who is visiting the doctor for a consultation. You are speaking to the user who is the doctor. You will be responding to the questions asked by the user. Do not respond along the lines of "How may I assist you?" or "How can I help you?". Act like a patient visiting the doctor for a consultation.'})
 
 	# Append the text to _messages for submission to ChatGPT and _convo for storage to a local transcript
 	_messages.append({
