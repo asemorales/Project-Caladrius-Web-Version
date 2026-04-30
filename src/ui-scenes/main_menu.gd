@@ -11,6 +11,7 @@ var _on_database_callback = null
 var main_menu
 @onready var start_menu: MarginContainer = $StartMenu
 @onready var settings_menu: MarginContainer = $SettingsMenu
+@onready var case_selection_menu: MarginContainer = $CaseSelectionMenu
 
 
 func _ready() -> void:
@@ -83,20 +84,30 @@ func _on_start_button_pressed() -> void:
 
 		database_callback.dataLoaded = _on_database_callback
 
-		# Get patient from database
+		# Retrieve database params
 		_get_sheet_database("Database_Parameters", "A2", "D2")
 		await obtained_database_data
 
+		# Make the user choose a case if enabled
+		if Globals.enable_case_selection:
+			main_menu.loading_screen.stop_loading_screen()
+			case_selection_menu.visible = true
+			await case_selection_menu.case_selected
+			main_menu.loading_screen.start_loading_screen()
+
+		# Retrieve patient headers
 		var header_row = 3
 		_get_sheet_database("Headers", "A" + str(header_row), "HK" + str(header_row))
 		await obtained_database_data
 
-		var row = 3 + 1 # 1 = patient number 1 (temporarily hard coded to patient 1 for testing)
+		# Retrieve patient info
+		var row = 3 + Globals.patient_num
 		_get_sheet_database("Patient", "A" + str(row), "HK" + str(row))
 		await obtained_database_data
 
 		Globals.patient.map_info()
 
+		# Retrieve the rest of the information
 		_get_sheet_database("History_of_Present_Illness", "A1", "D" + str(_database_params["Histories"] + 1))
 		await obtained_database_data
 
@@ -349,6 +360,8 @@ func _on_database_data_loaded(data: Array) -> void:
 			_database_params["Histories"] = int(dup["values"][0][1])
 			_database_params["Medications"] = int(dup["values"][0][2])
 			_database_params["Immunizations"] = int(dup["values"][0][3])
+
+			Globals.max_patients = _database_params["Patients"]
 		"Patient":
 			Globals.patient.set_info(dup["values"][0])
 		"History_of_Present_Illness":

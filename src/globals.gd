@@ -13,12 +13,19 @@ var master_password: String = "HsZ#Aefxj&H&8u$gd^$UU$%5y5j!UK6BjCXWMmpsne#^GNDda
 # Authentication
 var google_auth_token: String = ""
 
-# Settings
+# User Settings
 var tts: int
 var stt: int
 var volume: float
 
+# UI Settings
+var enable_case_selection: bool = true
+
+# Patient Database Info
+var max_patients: int = 0
+
 # Patient
+var patient_num: int = 1
 var patient: PatientData
 var language: int = 0
 var personality: int = 0
