@@ -90,6 +90,7 @@ func _on_start_button_pressed() -> void:
 
 		# Make the user choose a case if enabled
 		if Globals.enable_case_selection:
+			start_menu.visible = false
 			main_menu.loading_screen.stop_loading_screen()
 			case_selection_menu.visible = true
 			await case_selection_menu.case_selected
