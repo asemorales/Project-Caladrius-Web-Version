@@ -20,6 +20,17 @@ func on_select_button_pressed() -> void:
 	Globals.language = _language_button.get_selected_id()
 	Globals.personality = _personality_button.get_selected_id()
 
+	# Tell the embedding web shell (Caladrius) to create a Simulation row so
+	# the End Consult transcript + grades have somewhere to land. No-op on
+	# native builds.
+	if OS.has_feature("web"):
+		var payload := JSON.stringify({
+			"patient_num": Globals.patient_num,
+			"language": Globals.language,
+			"personality": Globals.personality,
+		})
+		JavaScriptBridge.eval("if (window.startSimulation) window.startSimulation(" + payload + ");")
+
 	case_selected.emit()
 
 

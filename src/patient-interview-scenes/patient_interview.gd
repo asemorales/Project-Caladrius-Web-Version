@@ -3055,10 +3055,63 @@ func get_overall_score() -> void:
 		for score in _mentor_fields[key].values():
 			avg += float(score)
 		print(key + ": " + str(avg/len(_mentor_fields[key])*100))
-	
+
 	_mentor_score = _mentor_fields
-	
+
 	_format_score()
+	_emit_end_consult_to_web_host()
+
+
+# Forwards transcript + per-criterion grades to the embedding web shell
+# (Caladrius) so it can render the end-of-consult summary screen. No-op on
+# native builds. Kept additive so editing this script stays minimal.
+func _emit_end_consult_to_web_host() -> void:
+	if not OS.has_feature("web"):
+		return
+
+	# Interleave _chat_convo (User/Patient turns) with the assistant entries
+	# in _mentor_convo (grade strings like "Introduction:1; Agenda:0; ...").
+	# Each doctor turn N corresponds to _mentor_convo[N*2 + 1].
+	var transcript_payload := []
+	var doctor_idx := 0
+	for chat_msg in _chat_convo:
+		if typeof(chat_msg) != TYPE_DICTIONARY:
+			continue
+		match chat_msg.get("role", ""):
+			"User":
+				transcript_payload.append({
+					"role": "doctor",
+					"content": str(chat_msg.get("content", "")),
+				})
+				var mentor_idx: int = doctor_idx * 2 + 1
+				if mentor_idx < _mentor_convo.size():
+					var mentor_msg = _mentor_convo[mentor_idx]
+					if typeof(mentor_msg) == TYPE_DICTIONARY and mentor_msg.get("role", "") == "assistant":
+						for part in str(mentor_msg.get("content", "")).split("; "):
+							var trimmed: String = part.strip_edges()
+							if trimmed != "":
+								transcript_payload.append({"role": "mentor", "content": trimmed})
+				doctor_idx += 1
+			"Patient":
+				transcript_payload.append({
+					"role": "patient",
+					"content": str(chat_msg.get("content", "")),
+				})
+
+	var grades_payload := []
+	for key in _mentor_score.keys():
+		var avg := 0.0
+		var count: int = len(_mentor_score[key])
+		for score_val in _mentor_score[key].values():
+			avg += float(score_val)
+		var pct: float = (avg / count) * 100.0 if count > 0 else 0.0
+		grades_payload.append({"name": str(key), "score": _round_place(pct, 2)})
+
+	var js_payload := JSON.stringify({
+		"grades": grades_payload,
+		"transcript": transcript_payload,
+	})
+	JavaScriptBridge.eval("if (window.endSimulation) window.endSimulation(" + js_payload + ");")
 
 
 func _grade_response(mentor_response) -> void:
