@@ -4,6 +4,7 @@ signal obtained_database_data
 
 var _database_httprequest: HTTPRequest
 var _database_params: Dictionary = {}
+var _patient_name: Array = []
 var _on_secrets_loaded_callback = null
 var _on_auth_token_callback = null
 var _on_database_callback = null
@@ -50,38 +51,31 @@ func _on_exit_only_button_pressed() -> void:
 #This is just for testing. Delete in Future
 # Nah, I need this (unless there's another button we can use to load the secrets)
 func _on_start_button_pressed() -> void:
-	var keys = Embeddings.data.keys()
-	for key in keys:
-		if not Embeddings.data[key].size() == 50:
-			print("Vector embeddings are not the correct size!")
-
+	# If the program is run on the web
 	if (OS.get_name() == "Web"):
-		_on_secrets_loaded_callback = JavaScriptBridge.create_callback(_on_secrets_loaded)
+		# Setup Godot <-> Browser communication for loading secrets (TEMPORARY)
+		_on_secrets_loaded_callback = JavaScriptBridge.create_callback(_on_secrets_loaded)				# Create a callback and save into a global var
+		var secrets_callback: JavaScriptObject = JavaScriptBridge.get_interface("secrets_callback")		# Get the Javascript var to setup a callback with
+		secrets_callback.dataLoaded = _on_secrets_loaded_callback										# Connect the Javascript var to the Godot function
 
-		# Retrieve the 'gd_callbacks' object
-		var secrets_callback: JavaScriptObject = JavaScriptBridge.get_interface("secrets_callback")
-
-		# Assign the callbacks
-		secrets_callback.dataLoaded = _on_secrets_loaded_callback
-
-		# Load secrets
+		# Load secrets (TEMPORARY)
 		JavaScriptBridge.eval("loadData();")
 
-		print("Loaded secrets via web!")
-
+		# Start the loading screen
 		main_menu.loading_screen.start_loading_screen()
 
+		# Wait until secrets is loaded
 		await Globals.secrets_loaded
 
 		# Get Google auth token
 		_authenticate()
 
+		# Wait until the Google auth token is obtained
 		await Globals.auth_token_loaded
 
+		# Setup Godot <-> Browser communication for loading the database
 		_on_database_callback = JavaScriptBridge.create_callback(_on_database_data_loaded)
-
 		var database_callback: JavaScriptObject = JavaScriptBridge.get_interface("database_callback")
-
 		database_callback.dataLoaded = _on_database_callback
 
 		# Retrieve database params
@@ -98,31 +92,49 @@ func _on_start_button_pressed() -> void:
 
 		# Retrieve patient headers
 		var header_row = 3
-		_get_sheet_database("Headers", "A" + str(header_row), "HK" + str(header_row))
+		_get_sheet_database("Headers", "A" + str(header_row), "BC" + str(header_row))
 		await obtained_database_data
 
 		# Retrieve patient info
-		var row = 3 + Globals.patient_num
-		_get_sheet_database("Patient", "A" + str(row), "HK" + str(row))
+		var row = header_row + Globals.patient_num
+		_get_sheet_database("Patient", "A" + str(row), "BC" + str(row))
 		await obtained_database_data
 
-		Globals.patient.map_info()
+		_get_sheet_database("Context", "A" + str(row), "BC" + str(row))
+		await obtained_database_data
+
+		_get_sheet_database("Embeddings", "A" + str(row), "BC" + str(row))
+		await obtained_database_data
 
 		# Retrieve the rest of the information
-		_get_sheet_database("History_of_Present_Illness", "A1", "D" + str(_database_params["Histories"] + 1))
+		_get_sheet_database("History_of_Present_Illness", "A2", "C" + str(_database_params["Histories"] + 1))
 		await obtained_database_data
 
-		_get_sheet_database("Medications", "A1", "F" + str(_database_params["Medications"] + 1))
+		_get_sheet_database("Medications", "A2", "F" + str(_database_params["Medications"] + 1))
 		await obtained_database_data
 
-		_get_sheet_database("Immunizations", "A1", "D" + str(_database_params["Immunizations"] + 1))
+		_get_sheet_database("Immunizations", "A2", "C" + str(_database_params["Immunizations"] + 1))
 		await obtained_database_data
 
+		print("Retrieved all relevant info from the database!")
+
+		# Build the patient dictionary
+		Globals.patient.map_info()
+
+		# Signal that the patient's data is fully loaded
 		Globals.patient_data_loaded.emit()
+
+		print("Patient data fully loaded!")
 		
-		main_menu.patient_interview.load_patient_model(int(Globals.patient.data["Age"]), Globals.patient.data["Sex"])
+		# Load the patient model based on the retrieved patient data
+		main_menu.patient_interview.load_patient_model(int(Globals.patient.data["Age"][2]), Globals.patient.data["Sex"][2])
 		
+		print("Patient model fully loaded!")
+
+		# Close the loading screen
 		main_menu.loading_screen.stop_loading_screen()
+	
+	# If the program is run as an executable (for DEBUG testing only)
 	else:
 		if FileAccess.file_exists("res://src/auth/secrets.json"):
 			# Get the data
@@ -149,6 +161,7 @@ func _on_start_button_pressed() -> void:
 	visible = false
 
 
+# Splits the string into an array of tokens (strings)
 func _tokenize(string: String) -> Array:
 	var tokens: Array = []
 
@@ -166,6 +179,9 @@ func _tokenize(string: String) -> Array:
 	return tokens
 
 
+# Uses a bag of words approach to obtain the vector of a string
+# Adds the vectors of each word in the string then divides it by the number of words in the string with vectors found in the local embeddings database
+# TO UPDATE
 func _get_string_vector(string: String) -> Array:
 	var vector: Array = []
 	var words: Array = _tokenize(string.to_lower())
@@ -207,6 +223,7 @@ func _get_string_vector(string: String) -> Array:
 	return vector
 
 
+# Finds the word's vector from the local embeddings database
 func _get_word_vector(word: String) -> Array:
 	if word in Embeddings.data:
 		return Embeddings.data[word]
@@ -214,6 +231,7 @@ func _get_word_vector(word: String) -> Array:
 		return []
 
 
+# Callback for when the secrets Javascript var is loaded
 func _on_secrets_loaded(data: Array):
 	if data.size() == 0:
 		return
@@ -231,7 +249,7 @@ func _on_secrets_loaded(data: Array):
 	Globals.secrets_loaded.emit()
 
 
-# Request a new access/authentication token
+# Request a new google access/authentication token
 func _authenticate() -> void:
 	# Build an appropriate JWT
 	var jwt: String = _create_jwt()
@@ -300,6 +318,7 @@ func _base64_to_base64url(string: String) -> String:
 	return string.replace("+", "-").replace("/", "_").replace("=", "")
 
 
+# Called when the HTTPRequest used to obtain the Google auth token resolves
 func _on_auth_token_loaded(data: Array):
 	if data.size() == 0:
 		return
@@ -317,10 +336,15 @@ func _on_auth_token_loaded(data: Array):
 
 
 func _get_sheet_database(sheet_name: String, range_start: String, range_end: String) -> void:
+	# Check to see if the sheet_name is supported by the program
 	match sheet_name:
 		"Headers":
 			pass
 		"Patient":
+			pass
+		"Context":
+			pass
+		"Embeddings":
 			pass
 		"History_of_Present_Illness":
 			pass
@@ -333,6 +357,7 @@ func _get_sheet_database(sheet_name: String, range_start: String, range_end: Str
 		_:
 			push_warning("Unsupported sheet name in patient database!")
 	
+	# Call the Javascript function responsible for retrieving data from the GSheet
 	JavaScriptBridge.eval("""fetch_database_data(\'%s\', \'%s\', \'%s\', \'%s\');""" % [Globals.google_auth_token, sheet_name, range_start, range_end])
 
 
@@ -347,15 +372,14 @@ func _on_database_data_loaded(data: Array) -> void:
 		return
 	
 	var dup = json.data.duplicate(true)
+	print("Retrieved " + dup["sheet_name"] + " data:")
+	print(dup)
 	match dup["sheet_name"]:
 		"Headers":
 			Globals.patient.set_info_headers(dup["values"][0])
 
-			for header in Globals.patient.info_headers:
-				Embeddings.header_embeddings_data[header] = _get_string_vector(header)
-			
-			print("Number of headers: %d" % Globals.patient.info_headers.size())
-			print("Number of header embeddings: %d" % Embeddings.header_embeddings_data.size())
+			# for header in Globals.patient.info_headers:
+			# 	Embeddings.header_embeddings_data[header] = _get_string_vector(header)
 		"Database_Parameters":
 			_database_params["Patients"] = int(dup["values"][0][0])
 			_database_params["Histories"] = int(dup["values"][0][1])
@@ -365,23 +389,53 @@ func _on_database_data_loaded(data: Array) -> void:
 			Globals.max_patients = _database_params["Patients"]
 		"Patient":
 			Globals.patient.set_info(dup["values"][0])
+			_patient_name.append(dup["values"][0][0])
+			_patient_name.append(dup["values"][0][1])
+
+			print("Patient info:")
+			print(dup["values"][0])
+		"Context":
+			Globals.patient.set_context(dup["values"][0])
+
+			print("Context:")
+			print(dup["values"][0])
+		"Embeddings":
+			Globals.patient.set_embeddings(dup["values"][0])
+
+			print("Embeddings:")
+			print(dup["values"][0])
 		"History_of_Present_Illness":
+			print("History:")
+			print(dup["values"])
+
 			for history in dup["values"]:
-				if history[0] == Globals.patient.data[Globals.patient.data.keys()[0]] and history[1] == Globals.patient.data[Globals.patient.data.keys()[1]]:
-					var temp_array = []
-					temp_array.append_array(history.slice(2, 4))
-					Globals.patient.add_history(temp_array)
+				if not history.size() == 3:
+					push_warning("Invalid history size!")
+					continue
+
+				if history[0] == _patient_name[0] and history[1] == _patient_name[1]:
+					Globals.patient.add_history([history[2]])
 		"Medications":
+			print("Medications:")
+			print(dup["values"])
+
 			for medication in dup["values"]:
-				if medication[0] == Globals.patient.data[Globals.patient.data.keys()[0]] and medication[1] == Globals.patient.data[Globals.patient.data.keys()[1]]:
-					var temp_array = []
-					temp_array.append_array(medication.slice(2, 6))
-					Globals.patient.add_medication(temp_array)
+				if not medication.size() == 6:
+					push_warning("Invalid medication size!")
+					continue
+				
+				if medication[0] == _patient_name[0] and medication[1] == _patient_name[1]:
+					Globals.patient.add_medication(medication.slice(2, 6))
 		"Immunizations":
+			print("Immunizations:")
+			print(dup["values"])
+
 			for immunization in dup["values"]:
-				if immunization[0] == Globals.patient.data[Globals.patient.data.keys()[0]] and immunization[1] == Globals.patient.data[Globals.patient.data.keys()[1]]:
-					var temp_array = []
-					temp_array.append_array(immunization.slice(2, 4))
-					Globals.patient.add_immunization(temp_array)
+				if not immunization.size() == 3:
+					push_warning("Invalid immunization size!")
+					continue
+				
+				if immunization[0] == _patient_name[0] and immunization[1] == _patient_name[1]:
+					Globals.patient.add_immunization([immunization[2]])
 
 	obtained_database_data.emit()

@@ -1,6 +1,7 @@
 extends Node2D
 
 signal module_complete(module, data, success)
+signal temp_stop # TEMPORARY TO PREVENT ERRORS WHILE MODIFYING CODE TO USE DATABASE 2.0
 
 var patient_model
 @export var freq_penalty: float = 0
@@ -85,6 +86,7 @@ var _elevenlabs_voice_id_female: String = "EXAVITQu4vr4xnSDxMaL"
 func _ready() -> void:
 	await Globals.secrets_loaded
 	await Globals.patient_data_loaded
+	await temp_stop	# TEMPORARY TO PREVENT ERRORS WHILE MODIFYING CODE TO USE DATABASE 2.0
 	
 	# STT
 	_stt_http_request = HTTPRequest.new()
