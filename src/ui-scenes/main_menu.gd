@@ -88,6 +88,29 @@ func _on_start_button_pressed() -> void:
 		_get_sheet_database("Database_Parameters", "A2", "D2")
 		await obtained_database_data
 
+		# Caladrius web shell integration: if the embedding page set a
+		# preselectedCase (Retry Preview flow), apply it and skip the in-game
+		# Case Selection screen. We mirror what case_selection_menu would have
+		# done — set Globals + fire window.startSimulation — so the rest of
+		# the flow stays identical to a normal Select press.
+		if Globals.enable_case_selection and OS.has_feature("web"):
+			var preselect_raw: Variant = JavaScriptBridge.eval("window.preselectedCase ? JSON.stringify(window.preselectedCase) : ''")
+			if typeof(preselect_raw) == TYPE_STRING and preselect_raw != "":
+				var preselect: Variant = JSON.parse_string(preselect_raw)
+				if typeof(preselect) == TYPE_DICTIONARY:
+					Globals.patient_num = int(preselect.get("patient_num", Globals.patient_num))
+					Globals.language = int(preselect.get("language", Globals.language))
+					Globals.personality = int(preselect.get("personality", Globals.personality))
+					Globals.enable_case_selection = false
+					var start_payload := JSON.stringify({
+						"patient_num": Globals.patient_num,
+						"language": Globals.language,
+						"personality": Globals.personality,
+					})
+					JavaScriptBridge.eval("if (window.startSimulation) window.startSimulation(" + start_payload + ");")
+					# Clear the host flag so a later F5 reload doesn't auto-skip again.
+					JavaScriptBridge.eval("window.preselectedCase = null;")
+
 		# Make the user choose a case if enabled
 		if Globals.enable_case_selection:
 			start_menu.visible = false
