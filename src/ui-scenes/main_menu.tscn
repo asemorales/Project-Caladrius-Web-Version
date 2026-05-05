@@ -7,6 +7,8 @@
 [ext_resource type="FontFile" uid="uid://bwqxklyv1wq0y" path="res://src/assets/fonts/GlacialIndifference-Bold.otf" id="3_4yc3r"]
 [ext_resource type="Script" uid="uid://cks5fbx6h0vr6" path="res://src/ui-scenes/settings_menu.gd" id="3_7hnyn"]
 [ext_resource type="Script" uid="uid://uh0lw4lyf5le" path="res://src/ui-scenes/case_selection_menu.gd" id="7_86d0s"]
+[ext_resource type="Texture2D" uid="uid://cc7hj6wag4pwy" path="res://src/assets/ui-assets/ArrowRoundVariant1_Mirrored.png" id="8_gr7bw"]
+[ext_resource type="Texture2D" uid="uid://ua8ebnjivp2w" path="res://src/assets/ui-assets/ArrowRoundVariant1.png" id="9_e25kj"]
 
 [node name="MainMenu" type="Control" unique_id=1989057295]
 layout_mode = 3
@@ -333,6 +335,8 @@ alignment = 1
 [node name="LeftButton" type="TextureButton" parent="CaseSelectionMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/HBoxContainer" unique_id=262324942]
 custom_minimum_size = Vector2(75, 75)
 layout_mode = 2
+texture_normal = ExtResource("8_gr7bw")
+ignore_texture_size = true
 stretch_mode = 0
 
 [node name="PatientEdit" type="LineEdit" parent="CaseSelectionMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/HBoxContainer" unique_id=925909704]
@@ -347,6 +351,8 @@ emoji_menu_enabled = false
 [node name="RightButton" type="TextureButton" parent="CaseSelectionMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/HBoxContainer" unique_id=1607262365]
 custom_minimum_size = Vector2(75, 75)
 layout_mode = 2
+texture_normal = ExtResource("9_e25kj")
+ignore_texture_size = true
 stretch_mode = 0
 
 [node name="LanguageButton" type="OptionButton" parent="CaseSelectionMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2" unique_id=548130697]
