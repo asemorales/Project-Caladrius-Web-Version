@@ -161,6 +161,7 @@ func _process(_delta: float) -> void:
 	elif not _interacted and Input.is_action_just_released("Record"):
 		JavaScriptBridge.eval("stopRecording();")
 		_interacted = true
+		
 
 
 func handleFailsafe(module, data, success) -> void:
@@ -294,7 +295,7 @@ func _on_enter_button_pressed() -> void:
 	if not _interacted and enter_here.text != "":
 		_interacted = true
 		
-		transcript.append_text("Doctor: " + enter_here.text + "\n")
+		transcript.append_text("[b]DOCTOR:[/b] " + enter_here.text + "\n")
 
 		call_llm(enter_here.text)
 
@@ -462,7 +463,9 @@ func _call_GoogleCloud_tts(text: String) -> void:
 
 
 func _on_stt_request_completed(result, response_code, request_headers, body) -> void:
-	pass
+	print("THIS HAPPENED")
+	print(result)
+	transcript.append_text("[b]DOCTOR:[/b] " + result + "\n")
 
 
 func _on_llm_request_completed(result, response_code, request_headers, body) -> void:
@@ -503,7 +506,7 @@ func _on_llm_request_completed(result, response_code, request_headers, body) -> 
 		"content": message["content"]
 	})
 
-	transcript.append_text("Patient: " + message["content"] + "\n")
+	transcript.append_text("[b]PATIENT:[/b] " + message["content"] + "\n")
 
 	module_complete.emit("chat", _chat_user_prompt, true)
 
@@ -629,6 +632,7 @@ func _on_transcript_loaded(data: Array) -> void:
 			# Transcript was successfully generated
 			module_complete.emit("stt", _stt_audio, true)
 			call_llm(dup["result"])
+			transcript.append_text("[b]DOCTOR:[/b] " + dup["result"] + "\n")
 
 
 func _get_closest_matches(vector: Array, n: int) -> Array:

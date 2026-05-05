@@ -50,7 +50,9 @@ theme_override_constants/margin_bottom = 30
 [node name="Transcript" type="RichTextLabel" parent="CanvasLayer/CenterContainer2/VBoxContainer/MarginContainer" unique_id=1856213414]
 layout_mode = 2
 theme = ExtResource("2_qmotm")
-theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/normal_font_size = 24
+theme_override_font_sizes/bold_font_size = 20
+bbcode_enabled = true
 
 [node name="MarginContainer2" type="MarginContainer" parent="CanvasLayer/CenterContainer2/VBoxContainer" unique_id=304953442]
 layout_mode = 2
