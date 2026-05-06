@@ -372,8 +372,6 @@ func _on_database_data_loaded(data: Array) -> void:
 		return
 	
 	var dup = json.data.duplicate(true)
-	print("Retrieved " + dup["sheet_name"] + " data:")
-	print(dup)
 	match dup["sheet_name"]:
 		"Headers":
 			Globals.patient.set_info_headers(dup["values"][0])
@@ -391,23 +389,11 @@ func _on_database_data_loaded(data: Array) -> void:
 			Globals.patient.set_info(dup["values"][0])
 			_patient_name.append(dup["values"][0][0])
 			_patient_name.append(dup["values"][0][1])
-
-			print("Patient info:")
-			print(dup["values"][0])
 		"Context":
 			Globals.patient.set_context(dup["values"][0])
-
-			print("Context:")
-			print(dup["values"][0])
 		"Embeddings":
 			Globals.patient.set_embeddings(dup["values"][0])
-
-			print("Embeddings:")
-			print(dup["values"][0])
 		"History_of_Present_Illness":
-			print("History:")
-			print(dup["values"])
-
 			for history in dup["values"]:
 				if not history.size() == 3:
 					push_warning("Invalid history size!")
@@ -416,9 +402,6 @@ func _on_database_data_loaded(data: Array) -> void:
 				if history[0] == _patient_name[0] and history[1] == _patient_name[1]:
 					Globals.patient.add_history([history[2]])
 		"Medications":
-			print("Medications:")
-			print(dup["values"])
-
 			for medication in dup["values"]:
 				if not medication.size() == 6:
 					push_warning("Invalid medication size!")
@@ -427,9 +410,6 @@ func _on_database_data_loaded(data: Array) -> void:
 				if medication[0] == _patient_name[0] and medication[1] == _patient_name[1]:
 					Globals.patient.add_medication(medication.slice(2, 6))
 		"Immunizations":
-			print("Immunizations:")
-			print(dup["values"])
-
 			for immunization in dup["values"]:
 				if not immunization.size() == 3:
 					push_warning("Invalid immunization size!")
