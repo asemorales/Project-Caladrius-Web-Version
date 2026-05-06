@@ -16,6 +16,7 @@ var google_auth_token: String = ""
 # User Settings
 var tts: int
 var stt: int
+var embed: int
 var volume: float
 
 # UI Settings
