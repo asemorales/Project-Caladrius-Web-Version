@@ -268,7 +268,7 @@ func handleFailsafe(module, data, data2, success, reason) -> void:
 				_chat_fails += 1
 				
 				# Retry sending chat LLM
-				call_llm(data)
+				call_llm(data, data2)
 			elif success:
 				_chat_fails = 0
 			
@@ -388,7 +388,6 @@ func _on_enter_button_pressed() -> void:
 		
 		transcript.append_text("[b]DOCTOR:[/b] " + enter_here.text + "\n")
 
-		_embed_input = enter_here.text
 		call_embeddings(enter_here.text)
 
 		enter_here.text = ""
@@ -407,12 +406,13 @@ func _on_audio_loaded(data: Array) -> void:
 		return
 	
 	var dup = json.data.duplicate(true)
-	_stt_input = dup["audio"]
 	call_stt(dup["audio"])
 
 
 ## Send audio to STT module to get the transcript
 func call_stt(audio) -> void:
+	_stt_input = audio
+
 	match Globals.stt:
 		0:
 			print("Calling Google Cloud v1 STT")
@@ -455,20 +455,21 @@ func _on_transcript_loaded(data: Array) -> void:
 	match dup["result"]:
 		"No Audio":
 			print("No audio detected in the recording!")
-			module_complete.emit("stt", _stt_audio, false, "No Audio")
+			module_complete.emit("stt", _stt_input, null, false, "No Audio")
 		"Unintelligible":
 			print("Audio is unintelligible!")
-			module_complete.emit("stt", _stt_audio, false, "Unintelligible")
+			module_complete.emit("stt", _stt_input, null, false, "Unintelligible")
 		_:
 			# Transcript was successfully generated
-			module_complete.emit("stt", _stt_audio, true, null)
+			module_complete.emit("stt", _stt_input, null, true, null)
 			transcript.append_text("[b]DOCTOR:[/b] " + dup["result"] + "\n")
 			
-			_embed_input = dup["result"]
 			call_embeddings(dup["result"])
 
 
 func call_embeddings(text: String) -> void:
+	_embed_input = enter_here.text
+
 	_call_openai_embeddings(text)
 
 
@@ -491,7 +492,7 @@ func _on_embeddings_request_completed(result, response_code, request_headers, bo
 	if result == HTTPRequest.RESULT_TIMEOUT:
 		printerr("Embeddings HTTP request timed out!")
 
-		module_complete.emit("embed", _chat_user_prompt, false, "Timed Out")
+		module_complete.emit("embed", _embed_input, null, false, "Timed Out")
 		return
 	
 	# Check if there was an error in the HTTP request response
@@ -501,7 +502,7 @@ func _on_embeddings_request_completed(result, response_code, request_headers, bo
 		print(request_headers)
 		print(body.get_string_from_utf8())
 
-		module_complete.emit("embed", _chat_user_prompt, false, "General Error")
+		module_complete.emit("embed", _embed_input, null, false, "General Error")
 		return
 	
 	# Parse and retrieve the embedding
@@ -509,33 +510,131 @@ func _on_embeddings_request_completed(result, response_code, request_headers, bo
 	json.parse(body.get_string_from_utf8())
 	var response = json.get_data()
 	var embedding = response["data"][0]["embedding"]
-	print(embedding)
 
-	_chat_input = _embed_input
-	# call_llm(_chat_input) TEMPORARILY COMMENTED
+	print("Type of embedding: " + str(typeof(embedding)))
+
+	module_complete.emit("embed", _embed_input, null, true, null)
+
+	call_llm(_embed_input, embedding)
 
 
 ## Sends text to the llm module to receive a response
-func call_llm(text: String) -> void:
-	_chat_user_prompt = text
+func call_llm(text: String, embedding: Array) -> void:
+	_chat_input = embedding
 
-	_call_ChatGPT(text)
+	_call_ChatGPT(text, embedding)
 	# _call_mentor(text) # TEMPORARILY DISABLE THE MENTOR AI
 
 
+# Used to retrieve the headers of the context that are close in distance to the provided vector
+func _retrieve_context(vector: Array, n: int) -> Array:
+	var context = []
+
+	match Globals.embed:
+		0:
+			context = _retrieve_glove_context(vector)
+		1:
+			context = _retrieve_openai_context(vector)
+		_:
+			push_error("Invalid embed setting!")
+			print("Defaulting to online embeddings!")
+			context = _retrieve_openai_context(vector)
+
+	if n >= context.size():
+		return context
+	return context.slice(0, n)
+
+
+func _retrieve_openai_context(vector: Array) -> Array:
+	var unsorted_context = []
+	for key in Globals.patient.data:
+		if not Globals.patient.data[key][0].size() == 0:
+			unsorted_context.append([_euclidean_distance(vector, Globals.patient.data[key][0]), key])
+	
+	var context = _quicksort(unsorted_context)
+
+	return context
+
+
+func _retrieve_glove_context(vector: Array[float]) -> Array:
+	var context = []
+
+	return context
+
+
+# For either GloVe-RAG or OpenAI embeddings use
+func _quicksort(arr: Array) -> Array:
+	# Base Case
+	if arr.size() <= 1:
+		return arr
+
+	# Make a copy of the array and select a random pivot
+	var copy = arr.duplicate(true)
+	var pivot = copy.pick_random()
+
+	# Split the array into two
+	var left: Array = []
+	var middle: Array = []
+	var right: Array = []
+
+	for item in copy:
+		if item[0] == pivot[0]:
+			middle.append(item)
+		elif item[0] < pivot[0]:
+			left.append(item)
+		else:
+			right.append(item)
+
+	var sorted_left = _quicksort(left)
+	var sorted_right = _quicksort(right)
+
+	var sorted: Array = []
+	for item in sorted_left:
+		sorted.append(item)
+	for item in middle:
+		sorted.append(item)
+	for item in sorted_right:
+		sorted.append(item)
+
+	return sorted
+
+
+# For either GloVe-RAG or OpenAI embeddings use
+func _euclidean_distance(vec1: Array, vec2: Array) -> float:
+	if not vec1.size() == vec2.size():
+		push_error("Vectors are not of the same size. Failed to calculate euclidean distance!")
+		return 0
+
+	var distance: float = 0
+	for i in range(vec1.size()):
+		distance += pow(vec1[i] - vec2[i], 2)
+	
+	return sqrt(abs(distance))
+
+
 # Sends text to ChatGPT to receive a response
-func _call_ChatGPT(text: String) -> void:
+func _call_ChatGPT(text: String, embedding: Array) -> void:
+	print("ChatGPT called!")
+
 	patient_model.play_thinking()
 	
+	print("Retrieving context for RAG use...")
+	var similar_context: Array = _retrieve_context(embedding, 10)
+
+	print("Retrieving most relevant headers...")
+	var context_headers: Array = []
+	for item in similar_context:
+		context_headers.append(item[-1])
+
 	# Get vector representation of the user prompt via GloVe
-	var vector: Array = _get_string_vector(text)
-	var matching_vectors: Array = _get_closest_matches(vector, 20)
-	var matching_headers: Array = []
-	for match in matching_vectors:
-		var header = match[2]
-		matching_headers.append(header)
+	# var vector: Array = _get_string_vector(text)
+	# var matching_vectors: Array = _get_closest_matches(vector, 20)
+	# var matching_headers: Array = []
+	# for match in matching_vectors:
+	# 	var header = match[2]
+	# 	matching_headers.append(header)
 	
-	print("Matching Headers: " + str(matching_headers))
+	# print("Matching Headers: " + str(matching_headers))
 	# _interacted = false # DEBUG
 	# return # DEBUG
 
@@ -543,11 +642,17 @@ func _call_ChatGPT(text: String) -> void:
 	_messages = _cleaned_messages.duplicate(true)
 
 	# Add context retrieved via GloVe-RAG implementation
-	for header in matching_headers:
-		var context_index: int = Globals.patient.to_index(header)
-		if context_index < _chat_context.size() and not _chat_context[context_index].size() == 0:
-			_messages.append(_chat_context[context_index])
-			print(_chat_context[context_index])
+	# for header in matching_headers:
+	# 	var context_index: int = Globals.patient.to_index(header)
+	# 	if context_index < _chat_context.size() and not _chat_context[context_index].size() == 0:
+	# 		_messages.append(_chat_context[context_index])
+	# 		print(_chat_context[context_index])
+
+	for header in context_headers:
+		_messages.append({
+			"role": "system",
+			"content": Globals.patient.data[header][1]
+		})
 	
 	# Always add this to minimize doctor hallucinations
 	_messages.append({"role": "system", "content": 'You are roleplaying as a patient who is visiting the doctor for a consultation. You are speaking to the user who is the doctor. You will be responding to the questions asked by the user. Do not respond along the lines of "How may I assist you?" or "How can I help you?". Act like a patient visiting the doctor for a consultation.'})
@@ -621,7 +726,7 @@ func _on_patient_llm_request_completed(result, response_code, request_headers, b
 	if result == HTTPRequest.RESULT_TIMEOUT:
 		printerr("ChatGPT HTTP request timed out!")
 
-		module_complete.emit("chat", _chat_user_prompt, false)
+		module_complete.emit("chat", _embed_input, _chat_input, false, "Timed Out")
 		return
 	
 	# Check if there was an error in the HTTP request response
@@ -631,7 +736,7 @@ func _on_patient_llm_request_completed(result, response_code, request_headers, b
 		print(request_headers)
 		print(body.get_string_from_utf8())
 
-		module_complete.emit("chat", _chat_user_prompt, false)
+		module_complete.emit("chat", _embed_input, _chat_input, false, "General Error")
 		return
 
 	# Parse and retrieve the patient AI response
@@ -658,7 +763,7 @@ func _on_patient_llm_request_completed(result, response_code, request_headers, b
 
 	transcript.append_text("[b]PATIENT:[/b] " + message["content"] + "\n")
 
-	module_complete.emit("chat", _chat_user_prompt, true)
+	module_complete.emit("chat", _embed_input, _chat_input, true, null)
 	
 	# Send the response to the TTS module
 	call_tts(message["content"])
@@ -750,7 +855,7 @@ func _call_GoogleCloud_tts(text: String) -> void:
 func _on_tts_request_completed(result, response_code, request_headers, body) -> void:
 	if result == HTTPRequest.RESULT_TIMEOUT:
 		printerr("TTS request timed out!")
-		module_complete.emit("tts", _tts_text, false)
+		module_complete.emit("tts", _tts_text, null, false, "Timed Out")
 		return
 	
 	if response_code != 200:
@@ -758,10 +863,10 @@ func _on_tts_request_completed(result, response_code, request_headers, body) -> 
 		print(result)
 		print(request_headers)
 		print(body.get_string_from_utf8())
-		module_complete.emit("tts", _tts_text, false)
+		module_complete.emit("tts", _tts_text, null, false, "General Error")
 		return
 
-	module_complete.emit("tts", _tts_text, true)
+	module_complete.emit("tts", _tts_text, null, true, null)
 
 	_stored_streamed_audio.clear()
 	_stored_streamed_audio.append_array(body)
@@ -814,73 +919,6 @@ func _sort_header_vectors(arr: Array) -> Array:
 	var sorted_vectors = _quicksort(sorting_vectors)
 
 	return sorted_vectors
-
-
-# TODO: modify to allow use with OpenAI embeddings
-# For GloVe-RAG use
-func _quicksort(arr: Array) -> Array:
-	# Base Case
-	if arr.size() <= 1:
-		return arr
-	if arr.size() == 2:
-		if arr[0][0] > arr[1][0]:
-			return [arr[1], arr[0]]
-		else:
-			return arr
-
-	# Make a copy of the array and select a random pivot
-	var copy = arr.duplicate(true)
-	var pivot = copy.pick_random()
-
-	# Split the array into two
-	var left: Array = []
-	var middle: Array = []
-	var right: Array = []
-
-	for item in copy:
-		if item.size() != 3:
-			push_error("Item to quick sort has size mismatch!")
-
-		if item[0] == pivot[0]:
-			middle.append(item)
-		elif item[0] < pivot[0]:
-			left.append(item)
-		else:
-			right.append(item)
-
-	for item in left:
-		if item.size() != 3:
-			push_error("Item to quick sort has size mismatch in left array!")
-	for item in middle:
-		if item.size() != 3:
-			push_error("Item to quick sort has size mismatch in middle array!")
-	for item in right:
-		if item.size() != 3:
-			push_error("Item to quick sort has size mismatch in right array!")
-
-	var sorted_left = _quicksort(left)
-	var sorted_right = _quicksort(right)
-
-	var sorted: Array = []
-	for item in sorted_left:
-		sorted.append(item)
-	for item in middle:
-		sorted.append(item)
-	for item in sorted_right:
-		sorted.append(item)
-
-	return sorted
-
-
-# For either GloVe-RAG or OpenAI embeddings use
-func _euclidean_distance(vec1: Array, vec2: Array) -> float:
-	assert (vec1.size() == vec2.size(), "Vectors are of different sizes. Can't calculate euclidean distance!")
-
-	var distance: float = 0
-	for i in range(vec1.size()):
-		distance += pow(vec1[i] - vec2[i], 2)
-	
-	return sqrt(abs(distance))
 
 
 # For GloVe-RAG use
