@@ -83,8 +83,6 @@ func map_info() -> void:
 	# Build the data dictionary
 	var i = 0
 	for header in info_headers:
-		print("Header: " + header)
-
 		var dat = []
 		if header == "History Of Present Illness":
 			print("Processing history...")
@@ -108,8 +106,6 @@ func map_info() -> void:
 		else:
 			dat = [str_to_var(embeddings[i].replace("\r\n", "").replace("\n", "")), context[i], info[i]]
 		
-		print("Data to save: ")
-		print(dat)
 		data[header] = dat
 		i += 1
 	

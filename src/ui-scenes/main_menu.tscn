@@ -163,6 +163,14 @@ theme_override_font_sizes/font_size = 50
 text = "Speech-To-Text"
 horizontal_alignment = 2
 
+[node name="EmbeddingsLabel" type="Label" parent="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer" unique_id=1876836772]
+custom_minimum_size = Vector2(0, 65)
+layout_mode = 2
+theme = ExtResource("2_jkw8p")
+theme_override_font_sizes/font_size = 50
+text = "Embeddings"
+horizontal_alignment = 2
+
 [node name="MicrophoneLabel" type="Label" parent="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer" unique_id=174327537]
 custom_minimum_size = Vector2(0, 65)
 layout_mode = 2
@@ -188,7 +196,7 @@ layout_mode = 2
 theme = ExtResource("2_jkw8p")
 theme_override_font_sizes/font_size = 30
 clip_text = true
-selected = 0
+selected = 1
 item_count = 3
 popup/item_0/text = "English (Online only; Expressive)"
 popup/item_0/id = 0
@@ -204,7 +212,7 @@ layout_mode = 2
 theme = ExtResource("2_jkw8p")
 theme_override_font_sizes/font_size = 30
 clip_text = true
-selected = 0
+selected = 1
 item_count = 3
 popup/item_0/text = "English (Online only; Fast transcription, less accurate)"
 popup/item_0/id = 0
@@ -213,6 +221,19 @@ popup/item_1/id = 1
 popup/item_2/text = "English (Offline)"
 popup/item_2/id = 2
 popup/item_2/disabled = true
+
+[node name="EmbeddingsOption" type="OptionButton" parent="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2" unique_id=1188343875]
+custom_minimum_size = Vector2(300, 65)
+layout_mode = 2
+theme = ExtResource("2_jkw8p")
+theme_override_font_sizes/font_size = 30
+clip_text = true
+selected = 1
+item_count = 2
+popup/item_0/text = "Local"
+popup/item_0/id = 0
+popup/item_1/text = "Online"
+popup/item_1/id = 1
 
 [node name="VBoxContainer" type="VBoxContainer" parent="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2" unique_id=1492105936]
 layout_mode = 2
@@ -400,6 +421,7 @@ text = "Select"
 [connection signal="drag_ended" from="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/VolumeSlider" to="SettingsMenu" method="_on_volume_slider_drag_ended"]
 [connection signal="item_selected" from="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/TextToSpeechOption" to="SettingsMenu" method="_on_text_to_speech_option_selected"]
 [connection signal="item_selected" from="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/SpeechToTextOption" to="SettingsMenu" method="_on_speech_to_text_option_selected"]
+[connection signal="item_selected" from="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/EmbeddingsOption" to="SettingsMenu" method="_on_embeddings_option_selected"]
 [connection signal="pressed" from="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/VBoxContainer/MicrophoneOption" to="SettingsMenu" method="_on_microphone_option_pressed"]
 [connection signal="pressed" from="SettingsMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/VBoxContainer/Button" to="SettingsMenu" method="_on_test_microphone_button_pressed"]
 [connection signal="pressed" from="SettingsMenu/VBoxContainer/HBoxContainer2/SaveAndExitButton" to="SettingsMenu" method="_on_save_and_exit_button_pressed"]
