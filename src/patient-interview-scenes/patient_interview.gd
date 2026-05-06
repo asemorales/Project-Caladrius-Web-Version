@@ -89,50 +89,56 @@ func _ready() -> void:
 	await temp_stop	# TEMPORARY TO PREVENT ERRORS WHILE MODIFYING CODE TO USE DATABASE 2.0
 	
 	# STT
+	# HTTPRequest Node
 	_stt_http_request = HTTPRequest.new()
 	add_child(_stt_http_request)
 	_stt_http_request.timeout = 20
 	_stt_http_request.request_completed.connect(_on_stt_request_completed)
 
+	# Audio Stream Player to record the player's voice
 	_stt_audio_stream_player = AudioStreamPlayer2D.new()
 	_stt_audio_stream_player.stream = AudioStreamMicrophone.new()
 	_stt_audio_stream_player.set_bus("Record")
 	add_child(_stt_audio_stream_player)
 
+	# Setup recording
 	var idx = AudioServer.get_bus_index("Record")
 	_stt_audio_effect = AudioServer.get_bus_effect(idx, 0)
 
 	_mix_rate = AudioServer.get_mix_rate()
 	_mix_rate = clamp(_mix_rate, 8000, 48000)
 
+	# Setup Godot <-> Browser comms for recording the player's voice
 	_on_audio_loaded_callback = JavaScriptBridge.create_callback(_on_audio_loaded)
-
 	var audio_callback: JavaScriptObject = JavaScriptBridge.get_interface("audio_callback")
-
 	audio_callback.dataLoaded = _on_audio_loaded_callback
 
+	# Setup Godot <-> Browser comms for retrieving the transcript of the player's voice
 	_on_transcript_loaded_callback = JavaScriptBridge.create_callback(_on_transcript_loaded)
-
 	var transcript_callback: JavaScriptObject = JavaScriptBridge.get_interface("transcript_callback")
-
 	transcript_callback.dataLoaded = _on_transcript_loaded_callback
 	
+	# Setup handling of errors in any module
 	module_complete.connect(handleFailsafe)
 
 	# Patient LLM
+	# HTTPRequest Node
 	_chat_http_request = HTTPRequest.new()
 	add_child(_chat_http_request)
 	_chat_http_request.timeout = 20
-	_chat_http_request.request_completed.connect(_on_llm_request_completed)
+	_chat_http_request.request_completed.connect(_on_patient_llm_request_completed)
 
+	# Setup GloVe RAG
 	_load_patient_context()
 
 	# Mentor LLM
+	# HTTPRequest Node
 	_mentor_http_request = HTTPRequest.new()
 	add_child(_mentor_http_request)
 	_mentor_http_request.timeout = 20
-	_mentor_http_request.request_completed.connect(_on_mentor_request_completed)
+	_mentor_http_request.request_completed.connect(_on_mentor_llm_request_completed)
 
+	# Setup prompts for the mentor (NOT RAG)
 	_load_mentor_context()
 	
 	# Mentor LLM Scoring
@@ -141,35 +147,40 @@ func _ready() -> void:
 	for i in range(1, len(field_boundaries)):
 		_order_fields.append(Globals.patient.data.keys().slice(field_boundaries[i-1], field_boundaries[i]))
 
+	# Setup fields used for scoring by the mentor AI
 	_get_mentor_fields()
 
 	# TTS
+	# HTTPRequest Node
 	_tts_http_request = HTTPRequest.new()
 	add_child(_tts_http_request)
 	_tts_http_request.timeout = 20
 	_tts_http_request.request_completed.connect(_on_tts_request_completed)
 
+	# AudioStreamPlayer for playing the patient's voice
 	_tts_audio_stream_player = AudioStreamPlayer2D.new()
 	add_child(_tts_audio_stream_player)
-
 
 	# Setup stt, llm, and tts modules
 	_setup_modules()
 
 
+# TO BE DEPRECATED IN FAVOR OF A UI BUTTON
 func _process(_delta: float) -> void:
 	if not _interacted and Input.is_action_just_pressed("Record"):
 		JavaScriptBridge.eval("startRecording();")
 	elif not _interacted and Input.is_action_just_released("Record"):
 		JavaScriptBridge.eval("stopRecording();")
 		_interacted = true
-		
 
 
+# Holds the logic for what to do when a module fails
 func handleFailsafe(module, data, success) -> void:
 	match module:
 		"stt":
-			if not success and _stt_fails < 3:
+			if not success and _stt_fails < 3: ## TODO: Check to see if the error is either due to unintelligeble audio or no audio being detected
+				printerr("STT module failed!")
+				
 				# Inform user STT failed
 				transcript.append_text("[System]: Speech-to-Text module failed to transcribe the audio. Retrying...\n")
 
@@ -191,6 +202,8 @@ func handleFailsafe(module, data, success) -> void:
 				transcript.append_text("[System]: Speech-to-Text module failed to transcribe the audio. Please try again.\n")
 		"chat":
 			if not success and _chat_fails < 3:
+				printerr("Chat module failed!")
+				
 				# Inform user chat LLM failed
 				transcript.append_text("[System]: Patient AI failed to generate a response. Retrying...\n")
 
@@ -211,14 +224,17 @@ func handleFailsafe(module, data, success) -> void:
 
 				transcript.append_text("[System]: Patient AI failed to generate a response. Please try again.\n")
 		"mentor":
+			printerr("Mentor module failed!")
 			if not success:
 				pass
 				
 				# (Optionally) inform user mentor LLM failed
 				
-				# Retry sending mentor LLM
+				# Retry sending request to mentor LLM
 		"tts":
 			if not success and _tts_fails < 3:
+				printerr("TTS module failed!")
+				
 				# Inform user TTS failed
 				transcript.append_text("[System]: Text-to-Speech module failed to generate audio. Retrying...\n")
 
@@ -238,7 +254,7 @@ func handleFailsafe(module, data, success) -> void:
 				patient_model.face.stop()
 				patient_model.face_play_default()
 		_:
-			printerr("Unknown module: " + module)
+			push_error("Unknown module failed: " + module)
 
 
 func _setup_modules() -> void:
@@ -263,11 +279,11 @@ func _setup_stt() -> void:
 			
 			_lang_code = "en-US" if Globals.language == 0 else "fil-PH"
 			_stt_headers = PackedStringArray(["Authorization: Bearer " + Globals.google_auth_token, "Content-Type: audio/webm", "accept: */*", "Format: WEBM_OPUS"])
-		2: # Local / Godot STT
+		2: # Local / Godot STT; NOT IMPLEMENTED
 			_stt_endpoint = ""
 			_stt_headers = PackedStringArray([])
 		_:
-			printerr("Invalid STT option!")
+			push_error("Invalid STT option!")
 
 
 func _setup_llm() -> void:
@@ -286,11 +302,11 @@ func _setup_tts() -> void:
 		1: # Google Cloud
 			_tts_endpoint = "https://texttospeech.googleapis.com/v1/text:synthesize?key=" + Globals.api_keys["GoogleCloud"]
 			_tts_headers = PackedStringArray(["accept: */*", "xi-api-key: " + Globals.api_keys["GoogleCloud"], "Content-Type: application/json"])
-		2: # Godot TTS
+		2: # Godot TTS; NOT IMPLEMENTED
 			_tts_endpoint = ""
 			_tts_headers = PackedStringArray([])
 		_:
-			printerr("Invalid TTS option!")
+			push_error("Invalid TTS option!")
 
 
 func _on_enter_button_pressed() -> void:
@@ -304,7 +320,24 @@ func _on_enter_button_pressed() -> void:
 		enter_here.text = ""
 
 
-## Send audio to STT module to get the text
+# Called when the browser finishes recording the player's voice
+func _on_audio_loaded(data: Array) -> void:
+	if data.size() == 0:
+		printerr("Audio data array retrieved from the browser is empty!")
+		return
+	
+	var json: JSON = JSON.new()
+	var json_parse_result: int = json.parse(data[0])
+	if not json_parse_result == OK:
+		push_error("Audio data retrieved from the browser can't be parsed as a json object!")
+		return
+	
+	var dup = json.data.duplicate(true)
+	_stt_audio = dup["audio"]
+	call_stt(dup["audio"])
+
+
+## Send audio to STT module to get the transcript
 func call_stt(audio) -> void:
 	match Globals.stt:
 		0:
@@ -316,7 +349,7 @@ func call_stt(audio) -> void:
 		2:
 			pass
 		_:
-			pass
+			push_error("Invalid STT setting!")
 
 
 func _call_GoogleCloud_v1_stt(audio) -> void:
@@ -325,6 +358,38 @@ func _call_GoogleCloud_v1_stt(audio) -> void:
 
 func _call_GoogleCloud_v2_stt(audio) -> void:
 	JavaScriptBridge.eval("""callGoogleSTTv2(\'%s\', \'%s\', \'%d\', \'%s\', \'%s\');""" % [_stt_endpoint, _lang_code, _mix_rate, audio, Globals.google_auth_token])
+
+
+func _on_stt_request_completed(result, response_code, request_headers, body) -> void:
+	transcript.append_text("[b]DOCTOR:[/b] " + result + "\n")
+
+
+func _on_transcript_loaded(data: Array) -> void:
+	if data.size() == 0:
+		printerr("Transcript data array retrieved from the browser is empty!")
+		return
+	
+	var json: JSON = JSON.new()
+	var json_parse_result: int = json.parse(data[0])
+	if not json_parse_result == OK:
+		push_error("Transcript data retrieved from the browser can't be parsed as a json object!")
+		return
+	
+	var dup = json.data.duplicate(true)
+
+	match dup["result"]:
+		"No Audio":
+			print("No audio detected in the recording!")
+			module_complete.emit("stt", _stt_audio, false)
+		"Unintelligible":
+			print("Audio is unintelligible!")
+			module_complete.emit("stt", _stt_audio, false)
+		_:
+			# Transcript was successfully generated
+			module_complete.emit("stt", _stt_audio, true)
+			transcript.append_text("[b]DOCTOR:[/b] " + dup["result"] + "\n")
+			
+			call_llm(dup["result"])
 
 
 ## Sends text to the llm module to receive a response
@@ -339,7 +404,7 @@ func call_llm(text: String) -> void:
 func _call_ChatGPT(text: String) -> void:
 	patient_model.play_thinking()
 	
-	# Get vector representation of the user prompt
+	# Get vector representation of the user prompt via GloVe
 	var vector: Array = _get_string_vector(text)
 	var matching_vectors: Array = _get_closest_matches(vector, 20)
 	var matching_headers: Array = []
@@ -348,29 +413,33 @@ func _call_ChatGPT(text: String) -> void:
 		matching_headers.append(header)
 	
 	print("Matching Headers: " + str(matching_headers))
-	# _interacted = false # TEMPORARY
-	# return # TEMPORARY
+	# _interacted = false # DEBUG
+	# return # DEBUG
 
 	# Reset messages to remove previously inserted context
 	_messages = _cleaned_messages.duplicate(true)
 
+	# Add context retrieved via GloVe-RAG implementation
 	for header in matching_headers:
 		var context_index: int = Globals.patient.to_index(header)
 		if context_index < _chat_context.size() and not _chat_context[context_index].size() == 0:
 			_messages.append(_chat_context[context_index])
 			print(_chat_context[context_index])
 	
+	# Always add this to minimize doctor hallucinations
 	_messages.append({"role": "system", "content": 'You are roleplaying as a patient who is visiting the doctor for a consultation. You are speaking to the user who is the doctor. You will be responding to the questions asked by the user. Do not respond along the lines of "How may I assist you?" or "How can I help you?". Act like a patient visiting the doctor for a consultation.'})
 
-	# Append the text to _messages for submission to ChatGPT and _convo for storage to a local transcript
+	# Append the text to _messages for submission to ChatGPT
 	_messages.append({
 		"role": "user",
 		"content": text
 	})
+	# Keep a copy of the messages sent to ChatGPT but without the added contexts
 	_cleaned_messages.append({
 		"role": "user",
 		"content": text
 	})
+	# Keep a copy of the conversation containing only the messages that are visible to the user for saving
 	_chat_convo.append({
 		"role": "User",
 		"content": text
@@ -390,21 +459,24 @@ func _call_ChatGPT(text: String) -> void:
 	# Send the HTTP request
 	var error: int = _chat_http_request.request(_chat_endpoint, _chat_headers, HTTPClient.METHOD_POST, body)
 	if error != OK:
-		push_error("An error occurred in the HTTP request.")
+		printerr("An error occurred in the Patient LLM HTTP request!")
 
 
 func _call_mentor(text: String) -> void:
+	# Ensure the mentor only grades the currently prompt sent by the user
 	_mentor_messages = _mentor_context.duplicate(true)
 	_mentor_messages.append({
 		"role": "user",
 		"content": text
 	})
 
+	# Keep a copy of messages that are visible to the user and are sent by them
 	_mentor_convo.append({
 		"role": "user",
 		"content": text
 	})
 
+	# Build the body of the HTTP request
 	var body: String = JSON.stringify({
 		"messages": _mentor_messages,
 		"model": _mentor_model,
@@ -415,9 +487,89 @@ func _call_mentor(text: String) -> void:
 		"temperature": temp
 	})
 
+	# Send the request
 	var error: int = _mentor_http_request.request(_mentor_endpoint, _mentor_headers, HTTPClient.METHOD_POST, body)
 	if error != OK:
-		push_error("An error occurred in the HTTP request to the mentor.")
+		printerr("An error occurred in the Mentor LLM HTTP request!")
+
+
+func _on_patient_llm_request_completed(result, response_code, request_headers, body) -> void:
+	# Check if the HTTP request timed out
+	if result == HTTPRequest.RESULT_TIMEOUT:
+		printerr("ChatGPT HTTP request timed out!")
+
+		module_complete.emit("chat", _chat_user_prompt, false)
+		return
+	
+	# Check if there was an error in the HTTP request response
+	if response_code != 200:
+		printerr("There was an error with the Patient LLM ChatGPT's response, response code:" + str(response_code))
+		print(result)
+		print(request_headers)
+		print(body.get_string_from_utf8())
+
+		module_complete.emit("chat", _chat_user_prompt, false)
+		return
+
+	# Parse and retrieve the patient AI response
+	var json = JSON.new()
+	json.parse(body.get_string_from_utf8())
+	var response = json.get_data()
+	var message = response["choices"][0]["message"]
+
+	# Append the response to _messages for submission to ChatGPT
+	_messages.append({
+		"role": "assistant",
+		"content": message["content"]
+	})
+	# Keep a copy of the conversation without the context
+	_cleaned_messages.append({
+		"role": "assistant",
+		"content": message["content"]
+	})
+	# Keep a copy of the conversation only containing messages visible to the player
+	_chat_convo.append({
+		"role": "Patient",
+		"content": message["content"]
+	})
+
+	transcript.append_text("[b]PATIENT:[/b] " + message["content"] + "\n")
+
+	module_complete.emit("chat", _chat_user_prompt, true)
+	
+	# Send the response to the TTS module
+	call_tts(message["content"])
+
+
+func _on_mentor_llm_request_completed(result, response_code, request_headers, body) -> void:
+	# Check if the HTTP request timed out
+	if result == HTTPRequest.RESULT_TIMEOUT:
+		printerr("Mentor AI HTTP request timed out!")
+		return
+	
+	# Check if there was an error in the HTTP request response
+	if response_code != 200:
+		printerr("There was an error with the Mentor LLM ChatGPT's response, response code:" + str(response_code))
+		print(result)
+		print(request_headers)
+		print(body.get_string_from_utf8())
+		return
+
+	var json = JSON.new()
+	json.parse(body.get_string_from_utf8())
+	var response = json.get_data()
+	var message = response["choices"][0]["message"]
+
+	mentor_comment.text = message["content"]
+
+	# Save to a copy of the mentor conversation to be saved
+	_mentor_convo.append({
+		"role": "assistant",
+		"content": message["content"]
+	})
+	
+	# Grade the response based on the mentor's response
+	_grade_response(message["content"])
 
 
 # Send text response to TTS module to get audio response
@@ -432,10 +584,11 @@ func call_tts(text: String) -> void:
 		2:
 			pass
 		_:
-			pass
+			push_error("Invalid TTS setting!")
 
 
 func _call_ElevenLabs_tts(text: String) -> void:
+	# Build the HTTP request body
 	var body = JSON.stringify({
 		"text": text,
 		"model_id": "eleven_flash_v2_5",
@@ -443,10 +596,14 @@ func _call_ElevenLabs_tts(text: String) -> void:
 		"voice_settings": {"stability": 0, "similarity_boost": 0}
 	})
 
-	_tts_http_request.request(_tts_endpoint, _tts_headers, HTTPClient.METHOD_POST, body)
+	# Send the request
+	var error: int = _tts_http_request.request(_tts_endpoint, _tts_headers, HTTPClient.METHOD_POST, body)
+	if error != OK:
+		printerr("An error occurred in the ElevenLabs TTS HTTP request!")
 
 
 func _call_GoogleCloud_tts(text: String) -> void:
+	# Build the HTTP request body
 	var body = JSON.stringify({
 		"input": {
 			"text": text
@@ -460,103 +617,11 @@ func _call_GoogleCloud_tts(text: String) -> void:
 			"audioEncoding": "MP3"
 		}
 	})
-
-	_tts_http_request.request(_tts_endpoint, _tts_headers, HTTPClient.METHOD_POST, body)
-
-
-func _on_stt_request_completed(result, response_code, request_headers, body) -> void:
-	print("THIS HAPPENED")
-	print(result)
-	transcript.append_text("[b]DOCTOR:[/b] " + result + "\n")
-
-
-func _on_llm_request_completed(result, response_code, request_headers, body) -> void:
-	# Check if the HTTP request timed out
-	if result == HTTPRequest.RESULT_TIMEOUT:
-		printerr("ChatGPT request timed out!")
-
-		module_complete.emit("chat", _chat_user_prompt, false)
-		return
 	
-	# Check if there was an error in the HTTP request response
-	if response_code != 200:
-		print("There was an error with ChatGPT's response, response code:" + str(response_code))
-		print(result)
-		print(request_headers)
-		print(body.get_string_from_utf8())
-
-		module_complete.emit("chat", _chat_user_prompt, false)
-		return
-
-	# Parse and retrieve the patient AI response
-	var json = JSON.new()
-	json.parse(body.get_string_from_utf8())
-	var response = json.get_data()
-	var message = response["choices"][0]["message"]
-
-	# Append the text to _messages for submission to ChatGPT and _convo for storage to a local transcript
-	_messages.append({
-		"role": "assistant",
-		"content": message["content"]
-	})
-	_cleaned_messages.append({
-		"role": "assistant",
-		"content": message["content"]
-	})
-	_chat_convo.append({
-		"role": "Patient",
-		"content": message["content"]
-	})
-
-	transcript.append_text("[b]PATIENT:[/b] " + message["content"] + "\n")
-
-	module_complete.emit("chat", _chat_user_prompt, true)
-
-	# DEBUG
-	# for msg in _messages:
-	# 	print(msg["content"])
-	
-	# Signal that a response was received from the patient AI
-	# _is_calling_chatgpt = false
-	# received_patient_response.emit()
-
-	# DEBUG
-	# print("Consultee response: " + message_text)
-
-	# # Send the response to a TTS service
-	call_tts(message["content"])
-
-	# # Save a local transcript of the conversation
-	# save_convo()
-
-
-func _on_mentor_request_completed(result, response_code, request_headers, body) -> void:
-	# Check if the HTTP request timed out
-	if result == HTTPRequest.RESULT_TIMEOUT:
-		printerr("Mentor AI request timed out!")
-		return
-	
-	# Check if there was an error in the HTTP request response
-	if response_code != 200:
-		print("There was an error with the Mentor AI's response, response code:" + str(response_code))
-		print(result)
-		print(request_headers)
-		print(body.get_string_from_utf8())
-		return
-
-	var json = JSON.new()
-	json.parse(body.get_string_from_utf8())
-	var response = json.get_data()
-	var message = response["choices"][0]["message"]
-
-	mentor_comment.text = message["content"]
-
-	_mentor_convo.append({
-		"role": "assistant",
-		"content": message["content"]
-	})
-	
-	_grade_response(message["content"])
+	# Send the request
+	var error: int = _tts_http_request.request(_tts_endpoint, _tts_headers, HTTPClient.METHOD_POST, body)
+	if error != OK:
+		printerr("An error occurred in the Google Cloud TTS HTTP request!")
 
 
 func _on_tts_request_completed(result, response_code, request_headers, body) -> void:
@@ -596,47 +661,7 @@ func _on_tts_request_completed(result, response_code, request_headers, body) -> 
 	_interacted = false
 
 
-func _on_audio_loaded(data: Array) -> void:
-	if data.size() == 0:
-		return
-	
-	var json: JSON = JSON.new()
-	var json_parse_result: int = json.parse(data[0])
-	if not json_parse_result == OK:
-		printerr("patient info can't be parsed as a json object")
-		return
-	
-	var dup = json.data.duplicate(true)
-	_stt_audio = dup["audio"]
-	call_stt(dup["audio"])
-
-
-func _on_transcript_loaded(data: Array) -> void:
-	if data.size() == 0:
-		return
-	
-	var json: JSON = JSON.new()
-	var json_parse_result: int = json.parse(data[0])
-	if not json_parse_result == OK:
-		printerr("patient info can't be parsed as a json object")
-		return
-	
-	var dup = json.data.duplicate(true)
-
-	match dup["result"]:
-		"No Audio":
-			print("No audio detected in the recording!")
-			module_complete.emit("stt", _stt_audio, false)
-		"Unintelligible":
-			print("Audio is unintelligible!")
-			module_complete.emit("stt", _stt_audio, false)
-		_:
-			# Transcript was successfully generated
-			module_complete.emit("stt", _stt_audio, true)
-			call_llm(dup["result"])
-			transcript.append_text("[b]DOCTOR:[/b] " + dup["result"] + "\n")
-
-
+# For GloVe-RAG use
 func _get_closest_matches(vector: Array, n: int) -> Array:
 	var matches: Array = []
 
@@ -650,23 +675,26 @@ func _get_closest_matches(vector: Array, n: int) -> Array:
 	return matches
 
 
+# For GloVe-RAG use
 func _sort_header_vectors(arr: Array) -> Array:
 	var headers = Embeddings.header_embeddings_data.keys()
 	var sorting_vectors: Array = []
 	for header in headers:
 		if not Embeddings.header_embeddings_data[header].size() == arr.size():
-			print("Vector has size mismatch! Skipping vector.")
+			print("Header's vector has size mismatch! Skipping vector...")
 			continue
 		sorting_vectors.append([_euclidean_distance(Embeddings.header_embeddings_data[header], arr), Embeddings.header_embeddings_data[header], header])
 
 	for item in sorting_vectors:
 		if item.size() != 3:
-			print("Item has size mismatch in sorting vectors!")
+			push_error("A header's item has size mismatch in sorting vectors!")
 	var sorted_vectors = _quicksort(sorting_vectors)
 
 	return sorted_vectors
 
 
+# TODO: modify to allow use with OpenAI embeddings
+# For GloVe-RAG use
 func _quicksort(arr: Array) -> Array:
 	# Base Case
 	if arr.size() <= 1:
@@ -688,7 +716,7 @@ func _quicksort(arr: Array) -> Array:
 
 	for item in copy:
 		if item.size() != 3:
-			print("Item has size mismatch!")
+			push_error("Item to quick sort has size mismatch!")
 
 		if item[0] == pivot[0]:
 			middle.append(item)
@@ -699,13 +727,13 @@ func _quicksort(arr: Array) -> Array:
 
 	for item in left:
 		if item.size() != 3:
-			print("Item has size mismatch in left array!")
+			push_error("Item to quick sort has size mismatch in left array!")
 	for item in middle:
 		if item.size() != 3:
-			print("Item has size mismatch in middle array!")
+			push_error("Item to quick sort has size mismatch in middle array!")
 	for item in right:
 		if item.size() != 3:
-			print("Item has size mismatch in right array!")
+			push_error("Item to quick sort has size mismatch in right array!")
 
 	var sorted_left = _quicksort(left)
 	var sorted_right = _quicksort(right)
@@ -721,8 +749,9 @@ func _quicksort(arr: Array) -> Array:
 	return sorted
 
 
+# For either GloVe-RAG or OpenAI embeddings use
 func _euclidean_distance(vec1: Array, vec2: Array) -> float:
-	assert (vec1.size() == vec2.size())
+	assert (vec1.size() == vec2.size(), "Vectors are of different sizes. Can't calculate euclidean distance!")
 
 	var distance: float = 0
 	for i in range(vec1.size()):
@@ -731,6 +760,7 @@ func _euclidean_distance(vec1: Array, vec2: Array) -> float:
 	return sqrt(abs(distance))
 
 
+# For GloVe-RAG use
 func _tokenize(string: String) -> Array:
 	var tokens: Array = []
 
@@ -748,6 +778,7 @@ func _tokenize(string: String) -> Array:
 	return tokens
 
 
+# For GloVe-RAG use
 func _get_string_vector(string: String) -> Array:
 	var vector: Array = []
 	var words: Array = _tokenize(string.to_lower())
@@ -774,6 +805,7 @@ func _get_string_vector(string: String) -> Array:
 	return vector
 
 
+# For GloVe-RAG use
 func _get_word_vector(word: String) -> Array:
 	if word in Embeddings.data:
 		return Embeddings.data[word]
@@ -1081,6 +1113,7 @@ func _load_mentor_context() -> void:
 	]
 
 
+# TODO: Update to use context retrieved from the database
 func _load_patient_context() -> void:
 	var headers = Globals.patient.data.keys()
 
@@ -2237,8 +2270,11 @@ func _load_patient_context() -> void:
 		_chat_context += [{"role": "system", "content": "Your medication is unknown. You must say that you are not sure about the medication you've taken."}]
 	
 	_cleaned_messages = _messages.duplicate(true)
+	
+	_messages.clear() # Switch to full RAG implementation
 
 
+# TO BE DEPRECATED
 # Prompts the patient AI using third person perspective
 func _load_third_person_context() -> void:
 	var headers = Globals.patient.data.keys()
@@ -3063,6 +3099,7 @@ func get_overall_score() -> void:
 	_format_score()
 
 
+# TODO: Make configurable
 func _grade_response(mentor_response) -> void:
 	var split_response = []
 	for response in mentor_response.split("; "):
