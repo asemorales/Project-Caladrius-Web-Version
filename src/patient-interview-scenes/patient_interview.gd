@@ -511,8 +511,6 @@ func _on_embeddings_request_completed(result, response_code, request_headers, bo
 	var response = json.get_data()
 	var embedding = response["data"][0]["embedding"]
 
-	print("Type of embedding: " + str(typeof(embedding)))
-
 	module_complete.emit("embed", _embed_input, null, true, null)
 
 	call_llm(_embed_input, embedding)
@@ -550,6 +548,7 @@ func _retrieve_openai_context(vector: Array) -> Array:
 	for key in Globals.patient.data:
 		if not Globals.patient.data[key][0].size() == 0:
 			unsorted_context.append([_euclidean_distance(vector, Globals.patient.data[key][0]), key])
+			# unsorted_context.append([_cosine_similarity(vector, Globals.patient.data[key][0]), key])
 	
 	var context = _quicksort(unsorted_context)
 
@@ -599,6 +598,28 @@ func _quicksort(arr: Array) -> Array:
 	return sorted
 
 
+func _cosine_similarity(vec1: Array, vec2: Array) -> float:
+	if not vec1.size() == vec2.size():
+		push_error("Vectors are not of the same size. Failed to calculate cosine similarity!")
+		return 0
+	
+	var dot_product = 0
+	for i in range(vec1.size()):
+		dot_product += vec1[i] * vec2[i]
+	
+	var vec1_magnitude = 0
+	for i in range(vec1.size()):
+		vec1_magnitude += pow(vec1[i], 2)
+	vec1_magnitude = sqrt(vec1_magnitude)
+
+	var vec2_magnitude = 0
+	for i in range(vec2.size()):
+		vec2_magnitude += pow(vec2[i], 2)
+	vec2_magnitude = sqrt(vec2_magnitude)
+
+	return dot_product / (vec1_magnitude * vec2_magnitude)
+
+
 # For either GloVe-RAG or OpenAI embeddings use
 func _euclidean_distance(vec1: Array, vec2: Array) -> float:
 	if not vec1.size() == vec2.size():
@@ -639,7 +660,7 @@ func _call_ChatGPT(text: String, embedding: Array) -> void:
 	# return # DEBUG
 
 	# Reset messages to remove previously inserted context
-	_messages = _cleaned_messages.duplicate(true)
+	# _messages = _cleaned_messages.duplicate(true)
 
 	# Add context retrieved via GloVe-RAG implementation
 	# for header in matching_headers:
@@ -647,6 +668,9 @@ func _call_ChatGPT(text: String, embedding: Array) -> void:
 	# 	if context_index < _chat_context.size() and not _chat_context[context_index].size() == 0:
 	# 		_messages.append(_chat_context[context_index])
 	# 		print(_chat_context[context_index])
+
+	# DEBUG
+	print("Relevant Headers: " + str(context_headers))
 
 	for header in context_headers:
 		_messages.append({
