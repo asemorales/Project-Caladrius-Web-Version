@@ -2,6 +2,220 @@ extends Node
 
 
 var header_embeddings_data = { }
+var header_keywords = {	# Consider using Regex; Keywords for fields whose context is NA will be ignored
+	# Patient Name
+	"Patient First Name": [
+		"patient", "name", "who"
+	],
+	"Patient Last Name": [
+		"patient", "name", "who"
+	],
+
+	# General Data
+	"Birthday": [
+		"birthday", "born", "when"
+	],
+	"Age": [
+		"age", "old"
+	],
+	"Sex": [
+		"sex", "gender", "identity", "identify"
+	],
+	"Address": [
+		"live", "address", "house", "home", "apartment"
+	],
+	"Reliability": [	# This is probably a parameter for the patient on how to speak, rather than info for the doctor to obtain
+
+	],
+	"Nationality": [
+		"nationality"
+	],
+	"Language": [
+		"language", "languages", "speak"
+	],
+	"Religion": [
+		"religion", "church", "mosque", "pray", "worship"
+	],
+	
+	# Informant Information	(NOTE: Applicable/Checked only if an informant is speaking on behalf of the patient)
+	"Presence of Informant": [
+		"patient", "who"
+	],
+	"Informant's Last Name": [
+		"name"
+	],
+	"Informant's Relationship to Patient": [
+		"relationship", "who"
+	],
+	"Informant's Reliability": [	# This is probably a parameter for the informant on how to speak, rather than info for the doctor to obtain
+
+	],
+	"Age of Informant": [
+		"age", "old"
+	],
+	"Sex of Informant": [
+		"sex", "gender", "identity", "identify"
+	],
+	"Other Informant Notes": [
+		"other", "details", "note", "notes", "know"
+	],
+
+	# Chief Complaint
+	"Chief Complaint": [
+		"reason", "help", "complain", "complaint", "problem", "issue", "why", "what"
+	],
+	"Concerns Regarding Problem": [
+		"concerns", "problem", "problems", "difficulty", "difficulties", "issue", "issues"
+	],
+	"History of Present Illness": [
+		"history"
+	],
+
+	# PQRST Assessment
+	"Provocation": [
+		"provoke", "provoked", "flare-up", "flare up"
+	],
+	"Quality": [
+		"like", "what", "how"
+	],
+	"Region": [
+		"region", "where"
+	],
+	"Severity": [
+		"how", "painful", "hurt"
+	],
+	"Timing": [
+		"when", "time"
+	],
+
+	# Review of Systems: General Symptoms
+	"General Symptoms": [
+		"symptoms", "other", "else"
+	],
+
+	# Review of Systems: Musculoskeletal or Dermatologic
+	"Other Musculoskeletal or Dermatologic Symptoms": [
+		"symptoms", "other", "else", "muscle", "bone", "skin"
+	],
+
+	# General Symptoms: HEENT
+	"Other HEENT Symptoms": [
+		"symptoms", "other", "else"
+	],
+
+	# General Symptoms: Respiratory
+	"Other Respiratory Symptoms": [
+		"symptoms", "other", "else", "chest", "breathing"
+	],
+
+	# General Symptoms: Cardiovascular
+	"Other Cardiovascular Symptoms": [
+		"symptoms", "other", "else", "chest"
+	],
+
+	# General Symptoms: Gastrointestinal
+	"Other Gastrointestinal Symptoms": [
+		"symptoms", "other", "else", "stomach"
+	],
+
+	# Genral Symptoms: Genitourinary
+	"Other Genitourinary Symptoms": [
+		"symptoms", "other", "else"
+	],
+
+	# General Symptoms: Endocrine
+	"Other Endocrine Symptoms": [
+		"symptoms", "other", "else"
+	],
+
+	# Past Medical History
+	"Other Past Medical History": [
+		"history"
+	],
+
+	# Family Medical History
+	"Other Family History Details": [
+		"family", "history"
+	],
+
+	# Context: Community Factors
+	"Pertinent Beliefs": [
+		"religious", "belief", "beliefs", "religion"
+	],
+	"Impact on Family": [
+		"family", "impact", "impacted", "affect", "affected"
+	],
+	"Facilitating": [
+
+	],
+	"Hindering": [
+		"prevent", "prevents", "preventing", "stop", "stops", "stopping", "hinder", "hinders", "hindering"
+	],
+	"Burden of Illness": [
+		"burden"
+	],
+
+	# Nutritional History
+	"Nutritional History Details": [
+		"nutrition", "diet", "eat", "eating", "food"
+	],
+
+	# Birth Maternal (NOTE: Applicable/Checked if the patient is female)
+	"Term": [
+		"term", "long", "pregnancy"
+	],
+	"Delivery Details": [
+		"delivered", "birth"
+	],
+	"G": [
+
+	],
+	"P": [
+
+	],
+	"BW": [
+
+	],
+	"Perinatal CX": [
+
+	],
+
+	# Immunizations
+	"Immunizations": [
+		"immunizations", "immune", "immunized"
+	],
+
+	# Developmental Milestones
+	"Developmental Milestones Details": [
+		"milestone", "development", "childhood", "child"
+	],
+
+	# Gynecologic History
+	"Gynecologic History Details": [
+
+	],
+
+	# Adolescent Interview (NOTE: Applicable/Checked if the patient is less than 18 years old)
+	"Adolescent Interview Details": [
+
+	],
+
+	# Family Income and Other Details
+	"Annual Family Income": [
+		"income", "earn", "earns"
+	],
+	"Social and Environmental History": [
+		"social", "environmental", "life", "history"
+	],
+	"Other Personal and Social History Notes": [
+		"personal", "social", "life", "history"
+	],
+
+	# Context: Stakeholder
+	"Stakeholder Analysis": [
+
+	]
+}
 var data = {
 	"patient": [-0.658917, 0.08996, -0.852553, 0.088266, 0.149426, 0.391484, -0.218112, -0.933449, -0.250003, 0.250543, 0.17754399999999998, 0.103785, -0.844824, -0.519389, -0.555361, 0.7236990000000001, -0.559669, 0.0028460000000000013, 0.392909, 0.171298, -0.50912, 0.16602899999999998, 0.856541, -0.103618, 0.119007, 0.422516, -0.521117, 0.705967, 1.985738, 0.532449, -0.506856, -0.263584, 1.073604, -1.27034, 0.254191, 1.483314, -0.427555, 3.2795769999999997, -0.028543999999999986, -0.001690999999999998, -0.050306000000000003, 0.425211, 0.34018499999999996, -0.247442, -1.409956, 0.06460900000000001, -0.764558, 0.301059, 0.041801000000000005, 0.276909],
 	"patients": [-0.159331, 0.012489, -0.267052, -0.759997, -0.366294, 0.605314, 0.5390980000000001, -1.041306, -0.240546, -0.33419, 0.311425, 0.026730999999999998, -0.76912, -0.18021, -0.32610399999999995, 0.741997, -0.844992, 0.687233, 0.498925, -0.7508269999999999, 0.33793399999999996, 0.007417000000000007, 1.3497059999999999, -0.030691999999999997, 0.36209199999999997, 0.584399, -0.926399, 0.697562, 1.775445, 0.879609, -0.06458300000000003, 0.308639, 1.814947, -1.918361, -0.032543, 1.693735, -0.563152, 3.568117, -0.471499, -0.163087, 0.21446900000000002, 0.11775899999999999, 0.520154, -0.397064, -1.710131, -0.465989, -1.335234, 0.21214500000000003, -0.192727, 0.20225800000000002],

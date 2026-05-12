@@ -376,8 +376,8 @@ func _on_database_data_loaded(data: Array) -> void:
 		"Headers":
 			Globals.patient.set_info_headers(dup["values"][0])
 
-			# for header in Globals.patient.info_headers:
-			# 	Embeddings.header_embeddings_data[header] = _get_string_vector(header)
+			for header in Globals.patient.info_headers:
+				Embeddings.header_embeddings_data[header] = _get_string_vector(header)
 		"Database_Parameters":
 			_database_params["Patients"] = int(dup["values"][0][0])
 			_database_params["Histories"] = int(dup["values"][0][1])

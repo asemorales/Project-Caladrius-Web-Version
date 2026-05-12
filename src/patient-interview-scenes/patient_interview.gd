@@ -470,7 +470,15 @@ func _on_transcript_loaded(data: Array) -> void:
 func call_embeddings(text: String) -> void:
 	_embed_input = enter_here.text
 
-	_call_openai_embeddings(text)
+	match Globals.embed:
+		0:
+			var embedding = _get_string_vector(text)
+			call_llm(text, embedding)
+		1:
+			_call_openai_embeddings(text)
+		_:
+			printerr("Invalid embeddings setting! Defaulting to OpenAI embeddings...")
+			_call_openai_embeddings(text)
 
 
 func _call_openai_embeddings(text: String) -> void:
@@ -525,7 +533,7 @@ func call_llm(text: String, embedding: Array) -> void:
 
 
 # Used to retrieve the headers of the context that are close in distance to the provided vector
-func _retrieve_context(vector: Array, n: int) -> Array:
+func _retrieve_context_headers(vector: Array, n: int) -> Array:
 	var context = []
 
 	match Globals.embed:
@@ -547,16 +555,24 @@ func _retrieve_openai_context(vector: Array) -> Array:
 	var unsorted_context = []
 	for key in Globals.patient.data:
 		if not Globals.patient.data[key][0].size() == 0:
-			unsorted_context.append([_euclidean_distance(vector, Globals.patient.data[key][0]), key])
-			# unsorted_context.append([_cosine_similarity(vector, Globals.patient.data[key][0]), key])
+			# unsorted_context.append([_euclidean_distance(vector, Globals.patient.data[key][0]), key])
+			unsorted_context.append([_cosine_similarity(vector, Globals.patient.data[key][0]), key])
 	
 	var context = _quicksort(unsorted_context)
 
-	return context
+	var headers = []
+	for c in context:
+		headers.append(c[1])
+
+	return headers
 
 
-func _retrieve_glove_context(vector: Array[float]) -> Array:
+func _retrieve_glove_context(vector: Array) -> Array:
 	var context = []
+	
+	var matching_vectors: Array = _get_closest_matches(vector)
+	for match in matching_vectors:
+		context.append(match[1])
 
 	return context
 
@@ -598,6 +614,7 @@ func _quicksort(arr: Array) -> Array:
 	return sorted
 
 
+# For either GloVe-RAG or OpenAI embeddings use
 func _cosine_similarity(vec1: Array, vec2: Array) -> float:
 	if not vec1.size() == vec2.size():
 		push_error("Vectors are not of the same size. Failed to calculate cosine similarity!")
@@ -639,25 +656,10 @@ func _call_ChatGPT(text: String, embedding: Array) -> void:
 
 	patient_model.play_thinking()
 	
-	print("Retrieving context for RAG use...")
-	var similar_context: Array = _retrieve_context(embedding, 10)
-
-	print("Retrieving most relevant headers...")
-	var context_headers: Array = []
-	for item in similar_context:
-		context_headers.append(item[-1])
-
-	# Get vector representation of the user prompt via GloVe
-	# var vector: Array = _get_string_vector(text)
-	# var matching_vectors: Array = _get_closest_matches(vector, 20)
-	# var matching_headers: Array = []
-	# for match in matching_vectors:
-	# 	var header = match[2]
-	# 	matching_headers.append(header)
-	
-	# print("Matching Headers: " + str(matching_headers))
-	# _interacted = false # DEBUG
-	# return # DEBUG
+	# Retrieve the relevant headers
+	print("Retrieving relevant headers for RAG use...")
+	var context_headers: Array = _retrieve_context_headers(embedding, 10)
+	print("Relevant headers retrieved!")
 
 	# Reset messages to remove previously inserted context
 	# _messages = _cleaned_messages.duplicate(true)
@@ -673,6 +675,10 @@ func _call_ChatGPT(text: String, embedding: Array) -> void:
 	print("Relevant Headers: " + str(context_headers))
 
 	for header in context_headers:
+		if not Globals.patient.data.get(header):
+			print("Header " + header + " not found in patient data!")
+			continue
+		
 		_messages.append({
 			"role": "system",
 			"content": Globals.patient.data[header][1]
@@ -914,17 +920,10 @@ func _on_tts_request_completed(result, response_code, request_headers, body) -> 
 
 
 # For GloVe-RAG use
-func _get_closest_matches(vector: Array, n: int) -> Array:
-	var matches: Array = []
-
+func _get_closest_matches(vector: Array) -> Array:
 	var sorted_vectors: Array = _sort_header_vectors(vector)
 
-	if n < sorted_vectors.size():
-		matches.append_array(sorted_vectors.slice(0, n))
-	else:
-		matches = sorted_vectors
-
-	return matches
+	return sorted_vectors
 
 
 # For GloVe-RAG use
@@ -935,11 +934,9 @@ func _sort_header_vectors(arr: Array) -> Array:
 		if not Embeddings.header_embeddings_data[header].size() == arr.size():
 			print("Header's vector has size mismatch! Skipping vector...")
 			continue
-		sorting_vectors.append([_euclidean_distance(Embeddings.header_embeddings_data[header], arr), Embeddings.header_embeddings_data[header], header])
-
-	for item in sorting_vectors:
-		if item.size() != 3:
-			push_error("A header's item has size mismatch in sorting vectors!")
+		# sorting_vectors.append([_euclidean_distance(Embeddings.header_embeddings_data[header], arr), header])
+		sorting_vectors.append([_cosine_similarity(Embeddings.header_embeddings_data[header], arr), header])
+	
 	var sorted_vectors = _quicksort(sorting_vectors)
 
 	return sorted_vectors
