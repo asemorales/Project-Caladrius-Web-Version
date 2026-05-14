@@ -31,6 +31,40 @@ func _ready() -> void:
 	open_start_menu()
 
 
+func _process_keywords() -> void:
+	var keywords = {}
+
+	var informant_regex: RegEx = RegEx.new()
+	informant_regex.compile("[Ii]nformant")
+
+	for header in Embeddings.header_keywords:
+		print("Setting keywords for header: " + header.strip_edges() + "...")
+		# Check if the header exists
+		if not Globals.patient.data.get(header.strip_edges()):
+			printerr("Header " + header.strip_edges() + " not found in patient data dictionary!")
+			continue
+
+		print("Header " + header.strip_edges() + " can be processed!")
+		# Skip if the header's context is NA
+		if Globals.patient.data[header.strip_edges()][1] == "N/A":
+			continue
+		if Globals.patient.data["Presence of Informant"][2].to_lower() == "true" and informant_regex.search_all(header.strip_edges()):
+			continue
+		if not Globals.patient.data["Sex"][2].to_lower() == "female" and header.strip_edges() in ["Term", "Delivery Details", "G", "P", "BW", "Perinatal CX"]:
+			continue
+		if int(Globals.patient.data["Age"][2]) >= 18 and header.strip_edges() == "Adolescent Interview Details":
+			continue
+
+		print("Header " + header.strip_edges() + " will be processed!")
+		for keyword in Embeddings.header_keywords[header.strip_edges()]:
+			if keywords.get(keyword) and header.strip_edges() not in keywords[keyword]:
+				keywords[keyword].append(header.strip_edges())
+			else:
+				keywords[keyword] = [header.strip_edges()]
+	
+	Embeddings.header_keywords = keywords
+
+
 func open_start_menu() -> void:
 	settings_menu.visible = false
 	start_menu.visible = true
@@ -125,6 +159,9 @@ func _on_start_button_pressed() -> void:
 		Globals.patient_data_loaded.emit()
 
 		print("Patient data fully loaded!")
+
+		# Process keywords for GloVe-RAG implementation
+		_process_keywords()
 		
 		# Load the patient model based on the retrieved patient data
 		main_menu.patient_interview.load_patient_model(int(Globals.patient.data["Age"][2]), Globals.patient.data["Sex"][2])

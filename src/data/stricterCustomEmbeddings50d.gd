@@ -2,7 +2,7 @@ extends Node
 
 
 var header_embeddings_data = { }
-var header_keywords = {	# Consider using Regex; Keywords for fields whose context is NA will be ignored
+var header_keywords = {	# Consider using Regex; Keywords for fields whose context is N/A will be ignored
 	# Patient Name
 	"Patient First Name": [
 		"patient", "name", "who"
@@ -28,21 +28,21 @@ var header_keywords = {	# Consider using Regex; Keywords for fields whose contex
 
 	],
 	"Nationality": [
-		"nationality"
+		"nationality", "race", "ethnicity"
 	],
 	"Language": [
 		"language", "languages", "speak"
 	],
 	"Religion": [
-		"religion", "church", "mosque", "pray", "worship"
+		"religion", "church", "mosque", "pray", "worship", "religious", "godly", "spiritual", "pious", "devout"
 	],
 	
 	# Informant Information	(NOTE: Applicable/Checked only if an informant is speaking on behalf of the patient)
 	"Presence of Informant": [
-		"patient", "who"
+		"patient", "who", "informant"
 	],
 	"Informant's Last Name": [
-		"name"
+		"name", "who"
 	],
 	"Informant's Relationship to Patient": [
 		"relationship", "who"
@@ -65,10 +65,10 @@ var header_keywords = {	# Consider using Regex; Keywords for fields whose contex
 		"reason", "help", "complain", "complaint", "problem", "issue", "why", "what"
 	],
 	"Concerns Regarding Problem": [
-		"concerns", "problem", "problems", "difficulty", "difficulties", "issue", "issues"
+		"concerns", "problem", "problems", "difficulty", "difficulties", "issue", "issues", "affect"
 	],
-	"History of Present Illness": [
-		"history"
+	"History Of Present Illness": [
+		"history", "illness"
 	],
 
 	# PQRST Assessment
@@ -79,85 +79,85 @@ var header_keywords = {	# Consider using Regex; Keywords for fields whose contex
 		"like", "what", "how"
 	],
 	"Region": [
-		"region", "where"
+		"region", "where", "part", "location"
 	],
 	"Severity": [
-		"how", "painful", "hurt"
+		"how", "painful", "hurt", "scale"
 	],
 	"Timing": [
-		"when", "time"
+		"when", "time", "specific", "action", "behavior"
 	],
 
 	# Review of Systems: General Symptoms
 	"General Symptoms": [
-		"symptoms", "other", "else"
+		"symptoms", "other", "else", "anything"
 	],
 
 	# Review of Systems: Musculoskeletal or Dermatologic
-	"Other Musculoskeletal or Dermatologic Symptoms": [
+	"Musculoskeletal or Dermatologic Symptoms": [
 		"symptoms", "other", "else", "muscle", "bone", "skin"
 	],
 
 	# General Symptoms: HEENT
-	"Other HEENT Symptoms": [
-		"symptoms", "other", "else"
+	"HEENT Symptoms": [
+		"symptoms", "other", "else", "head", "eye", "eyes", "ear", "ears", "nose", "throat"
 	],
 
 	# General Symptoms: Respiratory
-	"Other Respiratory Symptoms": [
-		"symptoms", "other", "else", "chest", "breathing"
+	"Respiratory Symptoms": [
+		"symptoms", "other", "else", "chest", "breathing", "breathe", "inhale", "inhaling", "exhale", "exhaling"
 	],
 
 	# General Symptoms: Cardiovascular
-	"Other Cardiovascular Symptoms": [
-		"symptoms", "other", "else", "chest"
+	"Cardiovascular Symptoms": [
+		"symptoms", "other", "else", "chest", "breast", "heart"
 	],
 
 	# General Symptoms: Gastrointestinal
-	"Other Gastrointestinal Symptoms": [
-		"symptoms", "other", "else", "stomach"
+	"Gastrointestinal Symptoms": [
+		"symptoms", "other", "else", "stomach", "intestine", "eat"
 	],
 
 	# Genral Symptoms: Genitourinary
-	"Other Genitourinary Symptoms": [
-		"symptoms", "other", "else"
+	"Genitourinary Symptoms": [
+		"symptoms", "other", "else", "pubic", "vagina", "penis", "genital", "genitals", "sex", "sexual", "intercourse", "pee", "urinate", "toilet", "poo", "bathroom", "washroom", "defecate", "business"
 	],
 
 	# General Symptoms: Endocrine
-	"Other Endocrine Symptoms": [
-		"symptoms", "other", "else"
+	"Endocrine Symptoms": [
+		"symptoms", "other", "else", "hormones", "hormonal", "mood", "feel", "feeling", "emotion", "emotions", "endocrine"
 	],
 
 	# Past Medical History
-	"Other Past Medical History": [
-		"history"
+	"Past Medical History": [
+		"history", "past", "previous", "doctor", "doctors"
 	],
 
 	# Family Medical History
-	"Other Family History Details": [
+	"Family History Details": [
 		"family", "history"
 	],
 
 	# Context: Community Factors
 	"Pertinent Beliefs": [
-		"religious", "belief", "beliefs", "religion"
+		"religious", "belief", "beliefs", "religion", "know"
 	],
-	"Impact on Family": [
+	"Impact On Family": [
 		"family", "impact", "impacted", "affect", "affected"
 	],
 	"Facilitating": [
-
+		"help", "helps", "helping", "facilitate", "facilitates", "facilitating", "allow", "allows", "allowing"
 	],
 	"Hindering": [
 		"prevent", "prevents", "preventing", "stop", "stops", "stopping", "hinder", "hinders", "hindering"
 	],
-	"Burden of Illness": [
-		"burden"
+	"Burden Of Illness": [
+		"burden", "feel", "feels", "emotion", "emotions", "think"
 	],
 
 	# Nutritional History
 	"Nutritional History Details": [
-		"nutrition", "diet", "eat", "eating", "food"
+		"nutrition", "diet", "eat", "eating", "food", "drink"
 	],
 
 	# Birth Maternal (NOTE: Applicable/Checked if the patient is female)
@@ -168,21 +168,21 @@ var header_keywords = {	# Consider using Regex; Keywords for fields whose contex
 		"delivered", "birth"
 	],
 	"G": [
-
+		"times", "many", "pregnant", "carry", "gravidity", "number", "conceive", "fertilize", "fetus"
 	],
 	"P": [
-
+		"many", "parity", "fit", "pregnant", "carry", "number", "success", "succeed", "fail", "gestate", "gestational", "stillbirth", "live", "fetus"
 	],
 	"BW": [
-
+		"weight", "baby", "heavy", "birth", "born"
 	],
-	"Perinatal CX": [
+	"Perinatal CX": [	# Not sure what this is
 
 	],
 
 	# Immunizations
 	"Immunizations": [
-		"immunizations", "immune", "immunized"
+		"immunizations", "immune", "immunized", "injection", "injections", "shot", "shots"
 	],
 
 	# Developmental Milestones
@@ -192,12 +192,12 @@ var header_keywords = {	# Consider using Regex; Keywords for fields whose contex
 
 	# Gynecologic History
 	"Gynecologic History Details": [
-
+		"history", "detail", "details", "gynaecologist", "ob", "gyne"
 	],
 
 	# Adolescent Interview (NOTE: Applicable/Checked if the patient is less than 18 years old)
 	"Adolescent Interview Details": [
-
+		"interview"
 	],
 
 	# Family Income and Other Details
@@ -213,7 +213,7 @@ var header_keywords = {	# Consider using Regex; Keywords for fields whose contex
 
 	# Context: Stakeholder
 	"Stakeholder Analysis": [
-
+		"say", "stakeholder", "tell", "influence", "influencing"
 	]
 }
 var data = {

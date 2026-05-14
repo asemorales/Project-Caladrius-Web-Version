@@ -28,6 +28,8 @@ func _init():
 
 ## Set headers for the general health
 func set_info_headers(value) -> void:
+	print("Headers: " + str(value))
+
 	info_headers = value
 
 
@@ -90,11 +92,11 @@ func map_info() -> void:
 			for hist in history:
 				total_history += hist[0] + "\n\n"
 			
-			total_history.rstrip("\n")
+			total_history.rstrip("\n\n")
 			dat = [str_to_var(embeddings[i].replace("\r\n", "").replace("\n", "")), context[i], total_history]
 		elif header == "Medications":
 			print("Processing medications...")
-			dat = [str_to_var(embeddings[i].replace("\r\n", "").replace("\n", "")), context[i], medications.duplicate(true)]		# NOTE: Medications is currently the only data column that is in array[array] instead of a string
+			dat = [str_to_var(embeddings[i].replace("\r\n", "").replace("\n", "")), context[i], medications.duplicate(true)]		# NOTE: Medications is currently the only data column that is in array[array] instead of a string; NOTE: it's currently not on the patient sheet so it's not being pulled
 		elif header == "Immunizations":
 			print("Processing immunizations...")
 			var total_immunizations = ""
@@ -106,7 +108,8 @@ func map_info() -> void:
 		else:
 			dat = [str_to_var(embeddings[i].replace("\r\n", "").replace("\n", "")), context[i], info[i]]
 		
-		data[header] = dat
+		data[header.strip_edges()] = dat
+		print("Added " + header.strip_edges() + " to the patient data dictionary!")
 		i += 1
 	
 	# Empty the temp global vars
