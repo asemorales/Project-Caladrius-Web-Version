@@ -164,9 +164,10 @@ func _ready() -> void:
 	for i in range(1, len(field_boundaries)):
 		_order_fields.append(Globals.patient.data.keys().slice(field_boundaries[i-1], field_boundaries[i]))
 
-	# Setup fields used for scoring by the mentor AI
-	# print("Setting up mentor fields for grading...")
-	# _get_mentor_fields()
+	# Setup fields used for scoring by the mentor AI. Must run so _mentor_fields
+	# is non-null before End Consult calls get_overall_score().
+	print("Setting up mentor fields for grading...")
+	_get_mentor_fields()
 
 	# TTS
 	# HTTPRequest Node
@@ -1408,7 +1409,10 @@ func _get_mentor_fields() -> void:
 		_mentor_fields[mentorfieldscsv[8][i]] = {}
 		
 		for field in mentorfieldscsv[i]:
-			if patient[field] not in NA:
+			# database-2.0 renamed/added headers, so the hardcoded field lists
+			# above don't all exist in patient. Missing field => treat as "" (in
+			# NA) and skip, instead of crashing on a nonexistent key.
+			if patient.get(field, "") not in NA:
 				_mentor_fields[mentorfieldscsv[8][i]][field] = 0
 
 
@@ -1418,7 +1422,8 @@ func get_overall_score() -> void:
 		var avg = 0
 		for score in _mentor_fields[key].values():
 			avg += float(score)
-		print(key + ": " + str(avg/len(_mentor_fields[key])*100))
+		var n = len(_mentor_fields[key])
+		print(key + ": " + str((avg / n * 100) if n > 0 else 0.0))
 
 	_mentor_score = _mentor_fields
 
@@ -1533,8 +1538,9 @@ func _format_score() -> void:
 		var avg = 0
 		for score in _mentor_score[key].values():
 			avg += float(score)
+		var n = len(_mentor_score[key])
 		fields += key + "\n"
-		scores += str(_round_place(avg/len(_mentor_score[key])*100, 2)) + "%\n"
+		scores += str(_round_place((avg / n * 100) if n > 0 else 0.0, 2)) + "%\n"
 		
 		var arr_fields = fields.split("\n")
 		var arr_scores = scores.split("\n")
