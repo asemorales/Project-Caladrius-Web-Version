@@ -2,11 +2,12 @@ extends MarginContainer
 
 var _audio_stream_player: AudioStreamPlayer
 var _is_mic_on: bool = false
-var _settings_ver: String = "1.0.0"
+var _settings_ver: String = "1.1.0"
 
 @onready var volume_slider: HSlider = $VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/VolumeSlider
 @onready var text_to_speech_option: OptionButton = $VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/TextToSpeechOption
 @onready var speech_to_text_option: OptionButton = $VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/SpeechToTextOption
+@onready var embeddings_option: OptionButton = $VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/EmbeddingsOption
 @onready var microphone_option: OptionButton = $VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/VBoxContainer/MicrophoneOption
 @onready var microphone_button: Button = $VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/VBoxContainer/Button
 @onready var main_menu: Control = get_node(".").get_parent()
@@ -34,11 +35,12 @@ func _ready() -> void:
 	# Create the settings cookie with default choices if no settings cookie is found
 	var file_access
 	if not _is_settings_valid():
-		print("No saved settings detected! Making a default one...")
+		print("Settings cookie is invalid! Making a default one...")
 		var settings_data = {
 			"volume": 100.0,
 			"tts": 1,
 			"stt": 1,
+			"embed": 1,
 			"mic": "default",
 			"version": _settings_ver
 		}
@@ -46,25 +48,35 @@ func _ready() -> void:
 		file_access.store_line(JSON.stringify(settings_data))
 		file_access.close()
 	
+	# Load the settings
 	var data = _load_settings()
 	
 	# Set the global vars
 	Globals.volume = data["volume"]
 	Globals.tts = data["tts"]
 	Globals.stt = data["stt"]
+	Globals.embed = data["embed"]
 
 	# Update UI to match loaded settings values
 	volume_slider.value = Globals.volume
 	text_to_speech_option.select(Globals.tts)
 	speech_to_text_option.select(Globals.stt)
+	embeddings_option.select(Globals.embed)
 
 
 func _is_settings_valid() -> bool:
+	# Check if the settings cookie exists
 	if not FileAccess.file_exists("user://settings"):
 		return false
 	
+	# Load the settings
 	var data = _load_settings()
+
+	# Check if the version key exists
+	if not data.get("version"):
+		return false
 	
+	# Check if the saved settings value is the same as the latest settings version
 	if not data["version"] == _settings_ver:
 		return false
 	return true
@@ -80,7 +92,7 @@ func _load_settings() -> Variant:
 	# Parse the settings data
 	var json_parse_result: int = json.parse(json_string)
 	if not json_parse_result == OK:
-		printerr("settings can't be parsed as a json object")
+		push_error("Settings can't be parsed as a json object!")
 		return { }
 	return json.data
 
@@ -90,6 +102,7 @@ func _save_settings() -> void:
 		"volume": Globals.volume,
 		"tts": Globals.tts,
 		"stt": Globals.stt,
+		"embed": Globals.embed,
 		"mic": "default",
 		"version": _settings_ver
 	}
@@ -133,6 +146,10 @@ func _on_text_to_speech_option_selected(index: int) -> void:
 
 func _on_speech_to_text_option_selected(index: int) -> void:
 	Globals.stt = index
+
+
+func _on_embeddings_option_selected(index: int) -> void:
+	Globals.embed = index
 
 
 func _on_save_and_exit_button_pressed() -> void:
