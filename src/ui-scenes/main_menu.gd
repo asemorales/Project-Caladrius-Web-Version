@@ -43,8 +43,7 @@ func _process_keywords() -> void:
 		if not Globals.patient.data.get(header.strip_edges()):
 			printerr("Header " + header.strip_edges() + " not found in patient data dictionary!")
 			continue
-
-		print("Header " + header.strip_edges() + " can be processed!")
+		
 		# Skip if the header's context is NA
 		if Globals.patient.data[header.strip_edges()][1] == "N/A":
 			continue
@@ -54,8 +53,7 @@ func _process_keywords() -> void:
 			continue
 		if int(Globals.patient.data["Age"][2]) >= 18 and header.strip_edges() == "Adolescent Interview Details":
 			continue
-
-		print("Header " + header.strip_edges() + " will be processed!")
+		
 		for keyword in Embeddings.header_keywords[header.strip_edges()]:
 			if keywords.get(keyword) and header.strip_edges() not in keywords[keyword]:
 				keywords[keyword].append(header.strip_edges())
@@ -218,8 +216,14 @@ func _tokenize(string: String) -> Array:
 
 # Uses a bag of words approach to obtain the vector of a string
 # Adds the vectors of each word in the string then divides it by the number of words in the string with vectors found in the local embeddings database
-# TO UPDATE
 func _get_string_vector(string: String) -> Array:
+	if string == "P":
+		string = "parity"
+	elif string == "G":
+		string = "gravidity"
+	elif string == "BW":
+		string = "birth weight"
+
 	var vector: Array = []
 	var words: Array = _tokenize(string.to_lower())
 
@@ -232,7 +236,7 @@ func _get_string_vector(string: String) -> Array:
 			vector = word_vector
 
 			var size = vector.size()
-			if not size == 50:
+			if not size == Globals.glove_vector_size:
 				print("Word vector was initialized with the wrong size!")
 
 			average += 1
@@ -246,7 +250,7 @@ func _get_string_vector(string: String) -> Array:
 	
 	if vector.size() == 0:
 		print("Vector of %s is empty!" % string)
-	elif not vector.size() == 50:
+	elif not vector.size() == Globals.glove_vector_size:
 		print("Vector of %s was built with the wrong size!" % string)
 	
 	for i in range(vector.size()):
@@ -254,7 +258,7 @@ func _get_string_vector(string: String) -> Array:
 	
 	if vector.size() == 0:
 		print("Final vector of %s is empty!" % string)
-	elif not vector.size() == 50:
+	elif not vector.size() == Globals.glove_vector_size:
 		print("Final vector of %s is not the correct size!" % string)
 	
 	return vector

@@ -351,7 +351,7 @@ func _setup_stt() -> void:
 func _setup_embeddings() -> void:
 	match Globals.embed:
 		0:
-			pass
+			pass	# Nothing needs to be done for the local GloVe-RAG implementation
 		1:
 			_embed_endpoint = "https://api.openai.com/v1/embeddings"
 			_embed_headers = PackedStringArray(["Content-type: application/json", "Authorization: Bearer " + Globals.api_keys["ChatGPT"]])
@@ -539,16 +539,58 @@ func _retrieve_context_headers(vector: Array, n: int) -> Array:
 	match Globals.embed:
 		0:
 			context = _retrieve_glove_context(vector)
+
+			match Globals.glove_method:
+				0:
+					if n >= context.size():
+						return context
+					return context.slice(0, n)
+				1:
+					if not n >= context.size():
+						context = context.slice(0, n)
+					
+					var headers: Array = []
+					for c in context:
+						for header in c:
+							headers.append(header)
+					
+					# Turn into dictionary to remove duplicates
+					var unique_headers = {}
+					for x in headers:
+						unique_headers[x] = true
+					
+					return unique_headers.keys()
+				_:
+					printerr("Invalid glove method! Defaulting to header keywords embedding approach...")
+
+					if not n >= context.size():
+						context = context.slice(0, n)
+					
+					var headers: Array = []
+					for c in context:
+						for header in c:
+							headers.append(header)
+					
+					# Turn into dictionary to remove duplicates
+					var unique_headers = {}
+					for x in headers:
+						unique_headers[x] = true
+					
+					return unique_headers.keys()
 		1:
 			context = _retrieve_openai_context(vector)
+
+			if n >= context.size():
+				return context
+			return context.slice(0, n)
 		_:
 			push_error("Invalid embed setting!")
 			print("Defaulting to online embeddings!")
 			context = _retrieve_openai_context(vector)
 
-	if n >= context.size():
-		return context
-	return context.slice(0, n)
+			if n >= context.size():
+				return context
+			return context.slice(0, n)
 
 
 func _retrieve_openai_context(vector: Array) -> Array:
@@ -685,7 +727,7 @@ func _call_ChatGPT(text: String, embedding: Array) -> void:
 		})
 	
 	# Always add this to minimize doctor hallucinations
-	_messages.append({"role": "system", "content": 'You are roleplaying as a patient who is visiting the doctor for a consultation. You are speaking to the user who is the doctor. You will be responding to the questions asked by the user. Do not respond along the lines of "How may I assist you?" or "How can I help you?". Act like a patient visiting the doctor for a consultation.'})
+	_messages.append({"role": "system", "content": 'You are roleplaying as a patient who is visiting the doctor for a consultation. You are speaking to the user who is the doctor. You will be responding to the questions asked by the user. Do not respond along the lines of "How may I assist you?" or "How can I help you?". Act like a patient visiting the doctor for a consultation. The doctor is the user. You are speaking to the doctor.'})
 
 	# Append the text to _messages for submission to ChatGPT
 	_messages.append({
@@ -921,21 +963,48 @@ func _on_tts_request_completed(result, response_code, request_headers, body) -> 
 
 # For GloVe-RAG use
 func _get_closest_matches(vector: Array) -> Array:
-	var sorted_vectors: Array = _sort_header_vectors(vector)
+	var sorted_vectors: Array = []
+	match Globals.glove_method:
+		0:
+			sorted_vectors = _sort_header_vectors(vector)
+		1:
+			sorted_vectors = _sort_header_vectors2(vector)
+		_:
+			printerr("Invalid glove method! Defaulting to header keywords embedding approach...")
+			sorted_vectors = _sort_header_vectors2(vector)
 
 	return sorted_vectors
 
 
 # For GloVe-RAG use
+# Header embeddings approach
 func _sort_header_vectors(arr: Array) -> Array:
 	var headers = Embeddings.header_embeddings_data.keys()
 	var sorting_vectors: Array = []
 	for header in headers:
 		if not Embeddings.header_embeddings_data[header].size() == arr.size():
-			print("Header's vector has size mismatch! Skipping vector...")
+			print(header + "'s vector has size mismatch! Skipping vector...")
 			continue
-		# sorting_vectors.append([_euclidean_distance(Embeddings.header_embeddings_data[header], arr), header])
-		sorting_vectors.append([_cosine_similarity(Embeddings.header_embeddings_data[header], arr), header])
+		sorting_vectors.append([_euclidean_distance(Embeddings.header_embeddings_data[header], arr), header])
+		# sorting_vectors.append([_cosine_similarity(Embeddings.header_embeddings_data[header], arr), header])
+	
+	var sorted_vectors = _quicksort(sorting_vectors)
+
+	return sorted_vectors
+
+
+# For GloVe-RAG use
+# Header keywords embeddings approach
+func _sort_header_vectors2(arr: Array) -> Array:
+	var keywords = Embeddings.header_keywords.keys()
+	var sorting_vectors: Array = []
+	for keyword in keywords:
+		var embedding = _get_string_vector(keyword)
+		if not embedding.size() == arr.size():
+			print(keyword + "'s vector has size mismatch! Skipping vector...")
+			continue
+		sorting_vectors.append([_euclidean_distance(embedding, arr), Embeddings.header_keywords[keyword]])
+		# sorting_vectors.append([_cosine_similarity(embedding, arr), Embeddings.header_keywords[keyword]])
 	
 	var sorted_vectors = _quicksort(sorting_vectors)
 

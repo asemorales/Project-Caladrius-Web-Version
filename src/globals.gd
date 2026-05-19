@@ -22,6 +22,10 @@ var volume: float
 # UI Settings
 var enable_case_selection: bool = true
 
+# Program Settings
+var glove_vector_size: int = 300
+var glove_method: int = 1   # 0 = header embeddings, 1 = header keywords embeddings
+
 # Patient Database Info
 var max_patients: int = 0
 
