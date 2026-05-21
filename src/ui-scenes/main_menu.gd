@@ -126,12 +126,10 @@ func _on_start_button_pressed() -> void:
 				if typeof(preselect) == TYPE_DICTIONARY:
 					Globals.patient_num = int(preselect.get("patient_num", Globals.patient_num))
 					Globals.language = int(preselect.get("language", Globals.language))
-					Globals.personality = int(preselect.get("personality", Globals.personality))
 					Globals.enable_case_selection = false
 					var start_payload := JSON.stringify({
 						"patient_num": Globals.patient_num,
 						"language": Globals.language,
-						"personality": Globals.personality,
 					})
 					JavaScriptBridge.eval("if (window.startSimulation) window.startSimulation(" + start_payload + ");")
 					# Clear the host flag so a later F5 reload doesn't auto-skip again.

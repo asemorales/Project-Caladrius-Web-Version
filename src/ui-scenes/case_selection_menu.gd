@@ -6,7 +6,6 @@ var saved_patient_edit_text: String
 
 @onready var _patient_edit: LineEdit = $VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/HBoxContainer/PatientEdit
 @onready var _language_button: OptionButton = $VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/LanguageButton
-@onready var _personality_button: OptionButton = $VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/PersonalityButton
 
 
 func _ready() -> void:
@@ -18,7 +17,6 @@ func on_select_button_pressed() -> void:
 
 	# Redundancy just in case
 	Globals.language = _language_button.get_selected_id()
-	Globals.personality = _personality_button.get_selected_id()
 
 	# Tell the embedding web shell (Caladrius) to create a Simulation row so
 	# the End Consult transcript + grades have somewhere to land. No-op on
@@ -27,7 +25,6 @@ func on_select_button_pressed() -> void:
 		var payload := JSON.stringify({
 			"patient_num": Globals.patient_num,
 			"language": Globals.language,
-			"personality": Globals.personality,
 		})
 		JavaScriptBridge.eval("if (window.startSimulation) window.startSimulation(" + payload + ");")
 
@@ -78,7 +75,3 @@ func on_patient_edit_text_submitted(_new_text: String) -> void:
 
 func on_language_button_item_selected(index: int) -> void:
 	Globals.language = _language_button.get_selected_id()
-
-
-func on_personality_button_item_selected(index: int) -> void:
-	Globals.personality = _personality_button.get_selected_id()

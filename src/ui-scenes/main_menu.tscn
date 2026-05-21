@@ -35,7 +35,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 100
-theme_override_constants/margin_top = 50
+theme_override_constants/margin_top = 200
 theme_override_constants/margin_right = 100
 theme_override_constants/margin_bottom = 50
 script = ExtResource("2_jyhnq")
@@ -74,20 +74,6 @@ layout_mode = 2
 theme = ExtResource("2_jkw8p")
 theme_override_font_sizes/font_size = 50
 text = "Settings
-"
-
-[node name="HelpButton" type="Button" parent="StartMenu/VBoxContainer/CenterContainer/StartMenuButtons" unique_id=1197177024]
-layout_mode = 2
-theme = ExtResource("2_jkw8p")
-theme_override_font_sizes/font_size = 50
-text = "Help
-"
-
-[node name="QuitButton" type="Button" parent="StartMenu/VBoxContainer/CenterContainer/StartMenuButtons" unique_id=1615317326]
-layout_mode = 2
-theme = ExtResource("2_jkw8p")
-theme_override_font_sizes/font_size = 50
-text = "Quit
 "
 
 [node name="SettingsMenu" type="MarginContainer" parent="." unique_id=961879743]
@@ -337,14 +323,6 @@ theme_override_font_sizes/font_size = 50
 text = "Language"
 horizontal_alignment = 2
 
-[node name="PersonalityLabel" type="Label" parent="CaseSelectionMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer" unique_id=749211576]
-custom_minimum_size = Vector2(0, 65)
-layout_mode = 2
-theme = ExtResource("2_jkw8p")
-theme_override_font_sizes/font_size = 50
-text = "Personality"
-horizontal_alignment = 2
-
 [node name="VBoxContainer2" type="VBoxContainer" parent="CaseSelectionMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer" unique_id=1378728386]
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
@@ -393,21 +371,6 @@ popup/item_1/id = 1
 popup/item_2/text = "Taglish"
 popup/item_2/id = 2
 
-[node name="PersonalityButton" type="OptionButton" parent="CaseSelectionMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2" unique_id=222804944]
-custom_minimum_size = Vector2(300, 65)
-layout_mode = 2
-theme = ExtResource("2_jkw8p")
-theme_override_font_sizes/font_size = 30
-clip_text = true
-selected = 0
-item_count = 3
-popup/item_0/text = "Neutral"
-popup/item_0/id = 0
-popup/item_1/text = "Talkative"
-popup/item_1/id = 1
-popup/item_2/text = "Aggressive"
-popup/item_2/id = 2
-
 [node name="SelectButton" type="Button" parent="CaseSelectionMenu/VBoxContainer" unique_id=81188423]
 custom_minimum_size = Vector2(400, 0)
 layout_mode = 2
@@ -431,5 +394,4 @@ text = "Select"
 [connection signal="text_submitted" from="CaseSelectionMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/HBoxContainer/PatientEdit" to="CaseSelectionMenu" method="on_patient_edit_text_submitted"]
 [connection signal="pressed" from="CaseSelectionMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/HBoxContainer/RightButton" to="CaseSelectionMenu" method="on_right_button_pressed"]
 [connection signal="item_selected" from="CaseSelectionMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/LanguageButton" to="CaseSelectionMenu" method="on_language_button_item_selected"]
-[connection signal="item_selected" from="CaseSelectionMenu/VBoxContainer/CenterContainer/MarginContainer/HBoxContainer/VBoxContainer2/PersonalityButton" to="CaseSelectionMenu" method="on_personality_button_item_selected"]
 [connection signal="pressed" from="CaseSelectionMenu/VBoxContainer/SelectButton" to="CaseSelectionMenu" method="on_select_button_pressed"]

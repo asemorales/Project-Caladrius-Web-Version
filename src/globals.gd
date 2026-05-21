@@ -33,4 +33,3 @@ var max_patients: int = 0
 var patient_num: int = 1
 var patient: PatientData
 var language: int = 0
-var personality: int = 0
