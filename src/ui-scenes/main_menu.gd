@@ -30,6 +30,12 @@ func _ready() -> void:
 
 	open_start_menu()
 
+	# For web integration of student exam (on autostart, student goes straight to the patient interview)
+	if OS.has_feature("web"):
+		var autostart_raw: Variant = JavaScriptBridge.eval("(window.preselectedCase && window.preselectedCase.autoStart) ? 1 : 0")
+		if int(autostart_raw) == 1:
+			_on_start_button_pressed.call_deferred()
+
 
 func _process_keywords() -> void:
 	var keywords = {}
